@@ -436,12 +436,6 @@ listbox5.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 listbox5.drop_target_register(DND_FILES)
 listbox5.dnd_bind('<<Drop>>', drop5)
 
-#lab_pdf_excel=Label(frame10, text='pages to be extracted:')
-#lab_pdf_excel.grid(row=0,column=0)
-#pages_pdf_excel=StringVar()
-#entry_pdf_excel=Entry(frame10,width=15,textvariable=pages_pdf_excel)
-#entry_pdf_excel.grid(row=0,column=1)
-
 button_addfile_pdf_excel = Button(frame10, command=add_files_listbox_pdf_excel,text='➕ Add Files ')
 button_addfile_pdf_excel.grid(row=1,column=0,sticky=N+S+E+W)
 button_clearfile_pdf_excel = Button(frame10, text='➖ Clear List')
