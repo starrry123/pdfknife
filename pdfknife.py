@@ -430,7 +430,7 @@ button_clearfile_r.bind("<Button-1>", lambda e: listbox4.delete(0,END))
 button_ok_r = Button(frame8,command=save_as_r, text="Rotate PDF",bg='gold')
 button_ok_r.grid(row=1,column=2,sticky=N+E+S+W)
 
-
+##################PDF Table extraction GUI#################
 listbox5 = Listbox(frame9, width=60)
 listbox5.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 listbox5.drop_target_register(DND_FILES)
