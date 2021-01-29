@@ -406,7 +406,7 @@ button_clearfile3.bind("<Button-1>", lambda e: listbox3.delete(0,END))
 button_ok = Button(frame6,command=pdf_merge_save, text="Save PDF",bg='gold')
 button_ok.grid(row=0,column=4,sticky=N+E+S+W)
 
-
+##################PDF Rotation GUI#################
 listbox4 = Listbox(frame7, width=60)
 listbox4.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 listbox4.drop_target_register(DND_FILES)
@@ -431,16 +431,12 @@ button_ok_r = Button(frame8,command=save_as_r, text="Rotate PDF",bg='gold')
 button_ok_r.grid(row=1,column=2,sticky=N+E+S+W)
 
 
+##################PDF Table Extraction GUI#################
 listbox5 = Listbox(frame9, width=60)
 listbox5.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 listbox5.drop_target_register(DND_FILES)
 listbox5.dnd_bind('<<Drop>>', drop5)
 
-#lab_pdf_excel=Label(frame10, text='pages to be extracted:')
-#lab_pdf_excel.grid(row=0,column=0)
-#pages_pdf_excel=StringVar()
-#entry_pdf_excel=Entry(frame10,width=15,textvariable=pages_pdf_excel)
-#entry_pdf_excel.grid(row=0,column=1)
 
 button_addfile_pdf_excel = Button(frame10, command=add_files_listbox_pdf_excel,text='➕ Add Files ')
 button_addfile_pdf_excel.grid(row=1,column=0,sticky=N+S+E+W)
@@ -451,4 +447,3 @@ button_ok_pdf_excel = Button(frame10,command=save_as_pdf_excel, text="Save Excel
 button_ok_pdf_excel.grid(row=1,column=2,sticky=N+E+S+W)
 
 root.mainloop()
-
