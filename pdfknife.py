@@ -193,12 +193,12 @@ def add_files_listbox3():
         listbox3.insert(END, item)       
 
 
-def save_as3():
+def pdf_merge_save():
     pdf_merger = PdfFileMerger(strict=False)
     save_path=filedialog.asksaveasfilename(parent=root, title='Save New PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')
     
     for (i,item) in enumerate(listbox.get(0,END)):
-        pdf_merger.append(item)
+        pdf_merger.append(PdfFileReader(item,strict=False))
     with open(save_path, 'wb') as save_path:
         pdf_merger.write(save_path)   
     listbox.delete(0,END)
@@ -403,7 +403,7 @@ button_clearfile3 = Button(frame6, text='➖ Clear List')
 button_clearfile3.grid(row=0,column=3,sticky=N+S+E+W)
 button_clearfile3.bind("<Button-1>", lambda e: listbox3.delete(0,END))
 
-button_ok = Button(frame6,command=save_as3, text="Save PDF",bg='gold')
+button_ok = Button(frame6,command=pdf_merge_save, text="Save PDF",bg='gold')
 button_ok.grid(row=0,column=4,sticky=N+E+S+W)
 
 
@@ -430,11 +430,17 @@ button_clearfile_r.bind("<Button-1>", lambda e: listbox4.delete(0,END))
 button_ok_r = Button(frame8,command=save_as_r, text="Rotate PDF",bg='gold')
 button_ok_r.grid(row=1,column=2,sticky=N+E+S+W)
 
-##################PDF Table extraction GUI#################
+
 listbox5 = Listbox(frame9, width=60)
 listbox5.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 listbox5.drop_target_register(DND_FILES)
 listbox5.dnd_bind('<<Drop>>', drop5)
+
+#lab_pdf_excel=Label(frame10, text='pages to be extracted:')
+#lab_pdf_excel.grid(row=0,column=0)
+#pages_pdf_excel=StringVar()
+#entry_pdf_excel=Entry(frame10,width=15,textvariable=pages_pdf_excel)
+#entry_pdf_excel.grid(row=0,column=1)
 
 button_addfile_pdf_excel = Button(frame10, command=add_files_listbox_pdf_excel,text='➕ Add Files ')
 button_addfile_pdf_excel.grid(row=1,column=0,sticky=N+S+E+W)
