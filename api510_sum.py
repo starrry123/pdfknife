@@ -1,5 +1,5 @@
 import re
-f=open(r'C:\Users\H_Han\Desktop\api510_cn.txt','r',encoding='utf8')
+f=open(r'api510_cn.txt','r',encoding='utf8')
 
 name=re.compile('Name:(.+)', re.UNICODE)
 add1=re.compile('Address:(.*)', re.UNICODE)
