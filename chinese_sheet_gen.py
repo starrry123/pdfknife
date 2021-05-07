@@ -98,7 +98,7 @@ def grid_lines(string):
     page=None
     new_pdf_file_name=None
 
-    new_pdf_file_name=os.path.join(os.path.dirname(__file__), 'GRID.'+str(datetime.timestamp(datetime.now()))+'.pdf')
+    new_pdf_file_name=os.path.join(os.path.dirname(__file__), 'Hanzi.'+str(datetime.timestamp(datetime.now()))+'.pdf')
     pdf=open(new_pdf_file_name,'wb')
     pdf.write(packet.getvalue())
     # Finally output new pdf
@@ -120,6 +120,7 @@ def chinese_grid_lines():
 #def clear_textbox()
 app=Tk()
 app.title("Python汉字田字格生成器")
+app.wm_iconbitmap(r"C:\Users\Haitao\Desktop\Python-script\hanzi_sheet\hanzi.ico")
 app.geometry("+600+400")
 frame1= LabelFrame(app,text='在此输入要生成的文字：(每页19字)')
 frame1.grid(column=0,row=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+W)
