@@ -1,4 +1,5 @@
 import io,os, re
+from PIL import ImageTk
 from pypinyin import pinyin
 from tkinter import *
 from tkinter import ttk
@@ -72,10 +73,11 @@ def grid_lines(string):
             hanzi=string_list.pop(0)
             c.setFont('kai',32)
             c.setFillColor(black)           
-            c.drawCentredString(x, y,hanzi)
+            c.drawCentredString(x, y,hanzi) #regular hanzi
             c.setFont('kai',32)
             c.setFillColor('#DCDCDC')
-            c.drawCentredString(x+2*grid_size, y,hanzi)
+            for i in range(col_scale.get()):
+                c.drawCentredString(x+2*(i+1)*grid_size, y,hanzi) #shaded hanzi
             c.setFont('CalibriB',7)
             c.setFillColor(blue)
             hanzi_py=re.sub(r"\[\[\'(.+)\'\]\]", r'\1',str(pinyin(hanzi)))
@@ -120,20 +122,33 @@ def chinese_grid_lines():
 #def clear_textbox()
 app=Tk()
 app.title("Python汉字田字格生成器")
-app.wm_iconbitmap(r"C:\Users\Haitao\Desktop\Python-script\hanzi_sheet\hanzi.ico")
+icon_path=r"C:\Users\Haitao\Desktop\Python-script\hanzi_sheet\hanzi.ico"
+icon=PhotoImage(file=r"C:\Users\Haitao\Desktop\Python-script\hanzi_sheet\hanzi_resized.png")
+app.wm_iconbitmap(icon_path)
 app.geometry("+600+400")
-frame1= LabelFrame(app,text='在此输入要生成的文字：(每页19字)')
-frame1.grid(column=0,row=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+W)
+frame0= LabelFrame(app,text='在此输入要生成的文字：(每页19字)')
+frame0.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+W)
+
+frame1=LabelFrame(frame0)
+frame1.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=E+N+S+W)
 t_lab=Label(frame1,font=('SimSun',14,'bold'),text='壹贰叁肆伍陆柒捌玖拾一二三四五六七八九')
-t_lab.grid(row=0,column=0,sticky=N+S+W)
+t_lab.grid(row=1,column=0,sticky=N+S+W)
 t_box=Text(frame1,font=('SimSun',14,'bold'),width=40,height=5)
-t_box.grid(row=1,column=0)
-b_clear=Button(frame1,command=lambda: t_box.delete('1.0','end-1c'), text='Clear')
-b_clear.grid(row=1,column=1, sticky=N)
-b_exit=Button(frame1,command=app.destroy,text='❌ Exit',fg='red', font='Tahoma 10 bold')
-b_exit.grid(row=2,column=1, sticky=S)
-b_ok=Button(frame1,command=chinese_grid_lines,text='OK',width=10,fg='green', font='Tahoma 10 bold')
-b_ok.grid(row=2,column=0,sticky=N+S)
+t_box.grid(row=2,column=0)
+
+frame2= LabelFrame(frame0)
+frame2.grid(row=2,column=0,sticky=E+N+S+W)
+col_scale=Scale(frame2, from_=2, to=8,orient=HORIZONTAL)
+col_scale.grid(row=0, column=0,sticky=E+N+S+W)
+
+frame3= LabelFrame(frame0)
+frame3.grid(row=3,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=E+N+S+W)
+l_icon=Label(frame3,image=icon)
+l_icon.grid(row=0,column=1,sticky=E+W+N+S)
+b_ok=Button(frame3,command=chinese_grid_lines,text='OK',width=15,fg='green', font='Tahoma 10 bold')
+b_ok.grid(row=0,column=2,sticky=E+W)
+b_clear=Button(frame3,command=lambda: t_box.delete('1.0','end-1c'), text='Clear',width=15,font='Tahoma 10 bold')
+b_clear.grid(row=0,column=3, sticky=E+W)
 mainloop()
 
 
