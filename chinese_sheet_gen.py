@@ -120,7 +120,7 @@ def chinese_grid_lines():
 #def clear_textbox()
 app=Tk()
 app.title("Python汉字田字格生成器")
-#app.geometry("600x600")
+app.geometry("+600+400")
 frame1= LabelFrame(app,text='在此输入要生成的文字：(每页19字)')
 frame1.grid(column=0,row=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+W)
 t_lab=Label(frame1,font=('SimSun',14,'bold'),text='壹贰叁肆伍陆柒捌玖拾一二三四五六七八九')
