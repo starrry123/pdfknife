@@ -7,7 +7,7 @@ from PyPDF2 import PdfFileWriter, PdfFileReader
 from tkinter import messagebox #for messagebox.
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
-from reportlab.lib.colors import Color,black,blue,red,white
+from reportlab.lib.colors import Color,black,blue,red,white, green
 from reportlab.lib.pagesizes import A4
 from datetime import date, time, datetime,timedelta
 import reportlab.pdfbase.ttfonts #Import the registered font module of reportlab
@@ -39,7 +39,7 @@ def grid_lines(string):
         while x < w+grid_size :
             if i % 2 ==0 :
                 c.setLineWidth(0.8)
-                c.setStrokeColor(black)
+                c.setStrokeColor(color_list.get())
                 c.setDash(1,0)
             else:
                 c.setLineWidth(0.2)
@@ -53,7 +53,7 @@ def grid_lines(string):
         while y < h :
             if i % 2 ==0 :
                 c.setLineWidth(0.8)
-                c.setStrokeColor(black)
+                c.setStrokeColor(color_list.get())
                 c.setDash(1,0)
             else:
                 c.setLineWidth(0.2)
@@ -130,19 +130,29 @@ frame1=LabelFrame(frame0)
 frame1.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=E+N+S+W)
 t_box=Text(frame1,font=('SimSun',14,'bold'),width=35,height=5)
 t_box.grid(row=0,column=0)
-col_spin=Spinbox(frame1, width=25, from_=4, to=11)
-col_spin.grid(row=1, column=0,sticky=E+N+S+W)
-
 
 frame2= LabelFrame(frame0)
-frame2.grid(row=3,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=E+N+S+W)
-l_icon=Label(frame2,image=img)
+frame2.grid(row=1,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=E+N+S+W)
+
+l_color=Label(frame2,text='Color:')
+l_color.grid(row=0,column=0,sticky=E+W+N+S)
+color_list=StringVar(value='black')
+combo_color = ttk.Combobox(frame2,textvariable=color_list, value=['black','red','green'])
+combo_color.grid(row=0,column=1,sticky=E+W+N+S)
+l_spin=Label(frame2,text='Columns:')
+l_spin.grid(row=0,column=2,sticky=E+W+N+S)
+col_spin=Spinbox(frame2, width=25, from_=4, to=11)
+col_spin.grid(row=0, column=3,sticky=E+N+S+W)
+
+frame3= LabelFrame(frame0)
+frame3.grid(row=3,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=E+N+S+W)
+l_icon=Label(frame3,image=img)
 l_icon.grid(row=0,column=0,sticky=E+W+N+S)
 
-b_ok=Button(frame2,command=chinese_grid_lines,text='OK',width=15,fg='green', font='Tahoma 10 bold')
-b_ok.grid(row=0,column=1,sticky=E+W)
-b_clear=Button(frame2,command=lambda: t_box.delete('1.0','end-1c'), text='Clear',width=15,font='Tahoma 10 bold')
-b_clear.grid(row=0,column=2, sticky=E+W)
+b_ok=Button(frame3,command=chinese_grid_lines,text='OK',width=15,fg='green', font='Tahoma 10 bold')
+b_ok.grid(row=0,column=1,sticky=E)
+b_clear=Button(frame3,command=lambda: t_box.delete('1.0','end-1c'), text='Clear',width=15,font='Tahoma 10 bold')
+b_clear.grid(row=0,column=2, sticky=E)
 mainloop()
 
 
