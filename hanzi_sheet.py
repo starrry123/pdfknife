@@ -119,8 +119,8 @@ def chinese_grid_lines():
 app=Tk()
 app.title("Python汉字田字格生成器")
 img=PhotoImage(data=IMG_DATA)
-#app.wm_iconbitmap(icon)
 app.tk.call('wm', 'iconphoto', app._w, img)
+app.resizable(False, False)
 
 app.geometry("+600+400")
 frame0= LabelFrame(app,font=('SimSun',14,'bold'),text='壹贰叁肆伍陆柒捌玖拾一二三四五六七八九')
