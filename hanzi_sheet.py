@@ -14,7 +14,6 @@ import reportlab.pdfbase.ttfonts #Import the registered font module of reportlab
 hei=reportlab.pdfbase.ttfonts.TTFont('hei','simhei.ttf') #Import font
 kai=reportlab.pdfbase.ttfonts.TTFont('kai','simkai.ttf') #Import font
 song=reportlab.pdfbase.ttfonts.TTFont('song','simsun.ttc') #Import font
-calibri=reportlab.pdfbase.ttfonts.TTFont('calibri','calibri.ttf') #Import font
 reportlab.pdfbase.pdfmetrics.registerFont(kai) #Register the font in the current directory
 reportlab.pdfbase.pdfmetrics.registerFont(song) #Register the font in the current directory
 reportlab.pdfbase.pdfmetrics.registerFont(hei) #Register the font in the current directory
@@ -76,7 +75,7 @@ def grid_lines(string):
             c.drawCentredString(x, y,hanzi) #regular hanzi
             c.setFont('kai',32)
             c.setFillColor('#DCDCDC')
-            for i in range(col_scale.get()):
+            for i in range(int(col_spin.get())):
                 c.drawCentredString(x+2*(i+1)*grid_size, y,hanzi) #shaded hanzi
             c.setFont('CalibriB',7)
             c.setFillColor(blue)
@@ -126,29 +125,26 @@ icon_path=r"C:\Users\Haitao\Desktop\Python-script\hanzi_sheet\hanzi.ico"
 icon=PhotoImage(file=r"C:\Users\Haitao\Desktop\Python-script\hanzi_sheet\hanzi_resized.png")
 app.wm_iconbitmap(icon_path)
 app.geometry("+600+400")
-frame0= LabelFrame(app,text='在此输入要生成的文字：(每页19字)')
+frame0= LabelFrame(app,font=('SimSun',14,'bold'),text='壹贰叁肆伍陆柒捌玖拾一二三四五六七八九(每页19字)')
 frame0.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+W)
 
 frame1=LabelFrame(frame0)
 frame1.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=E+N+S+W)
-t_lab=Label(frame1,font=('SimSun',14,'bold'),text='壹贰叁肆伍陆柒捌玖拾一二三四五六七八九')
-t_lab.grid(row=1,column=0,sticky=N+S+W)
 t_box=Text(frame1,font=('SimSun',14,'bold'),width=40,height=5)
-t_box.grid(row=2,column=0)
+t_box.grid(row=0,column=0)
+col_spin=Spinbox(frame1, width=25, from_=4, to=11)
+col_spin.grid(row=1, column=0,sticky=E+N+S+W)
+
 
 frame2= LabelFrame(frame0)
-frame2.grid(row=2,column=0,sticky=E+N+S+W)
-col_scale=Scale(frame2, from_=2, to=8,orient=HORIZONTAL)
-col_scale.grid(row=0, column=0,sticky=E+N+S+W)
+frame2.grid(row=3,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=E+N+S+W)
+l_icon=Label(frame2,image=icon)
+l_icon.grid(row=0,column=0,sticky=E+W+N+S)
 
-frame3= LabelFrame(frame0)
-frame3.grid(row=3,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=E+N+S+W)
-l_icon=Label(frame3,image=icon)
-l_icon.grid(row=0,column=1,sticky=E+W+N+S)
-b_ok=Button(frame3,command=chinese_grid_lines,text='OK',width=15,fg='green', font='Tahoma 10 bold')
-b_ok.grid(row=0,column=2,sticky=E+W)
-b_clear=Button(frame3,command=lambda: t_box.delete('1.0','end-1c'), text='Clear',width=15,font='Tahoma 10 bold')
-b_clear.grid(row=0,column=3, sticky=E+W)
+b_ok=Button(frame2,command=chinese_grid_lines,text='OK',width=15,fg='green', font='Tahoma 10 bold')
+b_ok.grid(row=0,column=1,sticky=E+W)
+b_clear=Button(frame2,command=lambda: t_box.delete('1.0','end-1c'), text='Clear',width=15,font='Tahoma 10 bold')
+b_clear.grid(row=0,column=2, sticky=E+W)
 mainloop()
 
 
