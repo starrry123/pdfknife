@@ -1,5 +1,4 @@
 import io,os, re
-from PIL import ImageTk
 from pypinyin import pinyin
 from tkinter import *
 from tkinter import ttk
