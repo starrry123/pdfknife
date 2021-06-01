@@ -4,8 +4,7 @@ from tkinter import messagebox #for messagebox.
 from tkinter import filedialog
 from TkinterDnD2 import *
 import pdf2image as ph
-import os,io,datetime, tabula
-
+import os,io,datetime, tabula,copy
 from PyPDF2 import PdfFileWriter, PdfFileReader,PdfFileMerger
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
@@ -184,9 +183,7 @@ def move_down3():
 def drop3(event):
     for item in listbox3.tk.splitlist(event.data):
         listbox3.insert(END,item)
-
-
-        
+  
 def add_files_listbox3():
     filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
     for item in root.tk.splitlist(filez):
@@ -194,15 +191,15 @@ def add_files_listbox3():
 
 
 def pdf_merge_save():
-    pdf_merger = PdfFileMerger(strict=False)
+    out_pdf = PdfFileWriter()
     save_path=filedialog.asksaveasfilename(parent=root, title='Save New PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')
-    
-    for (i,item) in enumerate(listbox.get(0,END)):
-        pdf_merger.append(PdfFileReader(item,strict=False))
-    with open(save_path, 'wb') as save_path:
-        pdf_merger.write(save_path)   
-    listbox.delete(0,END)
-
+    for item in listbox3.get(0,END):
+        source_pdf = PdfFileReader(open(item,'rb'),strict=False)
+        for p in range(source_pdf.getNumPages()):         
+            out_pdf.addPage(copy.copy(source_pdf.getPage(p)))
+    with open(save_path, 'wb') as save_path_stream:
+        out_pdf.write(save_path_stream)
+    listbox3.delete(0,END) 
 
 def drop4(event):
     for item in listbox4.tk.splitlist(event.data):
