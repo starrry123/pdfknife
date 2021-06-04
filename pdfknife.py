@@ -5,44 +5,41 @@ from tkinter import filedialog
 from TkinterDnD2 import *
 import pdf2image as ph
 import os,io,datetime, tabula,copy
-from PyPDF2 import PdfFileWriter, PdfFileReader,PdfFileMerger
+from PyPDF2 import PdfFileWriter, PdfFileReader
 from reportlab.pdfgen import canvas
-from reportlab.lib.units import mm
 from reportlab.lib.pagesizes import A4,A3, landscape
-from reportlab.lib.colors import Color, black, blue, red,white,green
+from reportlab.lib.colors import black, blue, red,white,green
+
 
 
 def rotate_page(FileName):
-    pdf_in = open(FileName, 'rb')
-    pdf_reader = PdfFileReader(pdf_in)
     pdf_writer = PdfFileWriter()
 
-    for pageNum in range(pdf_reader.numPages):
-        page = pdf_reader.getPage(pageNum)
-        ODegree = pdf_reader.getPage(pageNum).get('/Rotate')
-        print ("Page " + str(pageNum+1) + " orientation degrees is " + str(ODegree))
-        if ODegree == 0: 
-            page.rotateCounterClockwise(90)    
-        pdf_writer.addPage(page)
+    with open(FileName, 'rb') as pdf_in:
+        pdf_reader = PdfFileReader(pdf_in)
 
-    pdf_out = open('rotated.pdf', 'wb')
-    pdf_writer.write(pdf_out)
-    pdf_out.close()
-    pdf_in.close()
+        for pageNum in range(pdf_reader.numPages):
+            page = pdf_reader.getPage(pageNum)
+            ODegree = pdf_reader.getPage(pageNum).get('/Rotate')
+            print ("Page " + str(pageNum+1) + " orientation degrees is " + str(ODegree))
+            if ODegree == 0:
+                page.rotateCounterClockwise(90)
+            pdf_writer.addPage(page)
+
+    with open('rotated.pdf', 'wb') as pdf_out:
+        pdf_writer.write(pdf_out)
+
 
 def page_orientation (FileName):
-    pdf_in = open(FileName, 'rb')
-    pdf_reader = PyPDF2.PdfFileReader(pdf_in)
+    with open(FileName, 'rb') as pdf_in:
+        pdf_reader = PdfFileReader(pdf_in)
+
+        print (str(FileName))
+        for pageNum in range(pdf_reader.numPages):
+            ODegree = pdf_reader.getPage(pageNum).get('/Rotate')
+            print ("Page " + str(pageNum+1) + " orientation degrees is " + str(ODegree))
 
 
-    print (str(FileName))
-    for pageNum in range(pdf_reader.numPages):
-        page = pdf_reader.getPage(pageNum)
-        ODegree = pdf_reader.getPage(pageNum).get('/Rotate')
-        print ("Page " + str(pageNum+1) + " orientation degrees is " + str(ODegree))
-
-    pdf_in.close()
-    
 def grid_lines(pdf_name=None):
     packet = io.BytesIO()
     c = canvas.Canvas(packet, pagesize=eval(pg.get()))
@@ -56,7 +53,7 @@ def grid_lines(pdf_name=None):
     while x < w or y< h: 
         c.line(x, 0, x, h)
         c.setFillColor(red)
-        if CheckV2.get():
+        if CheckV1.get():
             c.drawString(x,10,str(int(x/10)))
             c.drawString(x,830,str(int(x/10)))
             c.drawString(20,y,str(int(y/10)))
@@ -68,51 +65,43 @@ def grid_lines(pdf_name=None):
     c.circle(0, 0, x_step/2.0,fill=1) # draw origin circle
     c.save()
 
-    packet.seek(0) #buffer start from 0
+    packet.seek(0)
     grid_stream = PdfFileReader(packet)
     output = PdfFileWriter()
-    new_pdf_file_name=None
     if pdf_name:
-        with open(pdf_name, "rb") as pdf_name_stream:
-            bg_pdf=PdfFileReader(pdf_name_stream)
-            for pageNum in range(bg_pdf.numPages):
-                #grid_pdf=PdfFileReader(packet)
-                #bg_pdf=PdfFileReader(pdf_name_stream)
-                page = copy.copy(bg_pdf.getPage(pageNum))
-                page.mergePage(grid_stream.getPage(0))
-                #page.compressContentStreams()                
-                output.addPage(page)
-        new_pdf_file_name=os.path.join(os.path.dirname(__file__), os.path.splitext(pdf_name)[0]+".GRID"+".pdf")
-        with open(new_pdf_file_name, "wb") as outputStream:
+        existing_pdf=PdfFileReader(open(pdf_name, "rb"))
+        new_PDF=os.path.join(os.path.dirname(__file__), os.path.splitext(pdf_name)[0]+".GRID"+".pdf")
+        for pageNum in range(existing_pdf.numPages):
+            page = existing_pdf.getPage(pageNum)
+            page.mergePage(grid_stream.getPage(0))
+            output.addPage(page)
+        with open(new_PDF, "wb") as outputStream:
             output.write(outputStream)
     else:
-        new_pdf_file_name=os.path.join(os.path.dirname(__file__), 'GRID.'+str(datetime.datetime.timestamp(datetime.datetime.now()))+'.pdf')
-        print (new_pdf_file_name)
-        with open(new_pdf_file_name,'wb') as pdf:
+        new_PDF=os.path.join(os.path.dirname(__file__), 'GRID.'+str(datetime.datetime.timestamp(datetime.datetime.now()))+'.pdf')
+        with open(new_PDF,'wb') as pdf:
             pdf.write(packet.getvalue())
-
-    os.startfile(new_pdf_file_name,'open')
+            
+    os.startfile(new_PDF,'open')
 
 def pdf_grid ():
-    if CheckV1.get():
+    if len(listbox2.get(0,END))>0:
         for pdf in listbox2.get(0,END):
             listbox2.delete(0)
             grid_lines(pdf)
     else:
         print('create empty grid file')
         grid_lines()
- 
+
 
 def convert_image():
     folder_selected = filedialog.askdirectory()
 
-    for (i,item) in enumerate(listbox.get(0,END)):
+    for PDF in listbox.get(0,END):
         listbox.delete(0)
-        PDF=item
         images = ph.convert_from_path(PDF)
         for i,img in enumerate(images):
             img.save(os.path.join(folder_selected, os.path.splitext(os.path.basename(PDF))[0]+'_'+str(i)+'.jpg'))
-
 
 
 def drop(event):
@@ -123,13 +112,18 @@ def drop2(event):
     for item in listbox2.tk.splitlist(event.data):
         listbox2.insert(END,item)
 
+def drop3(event):
+    for item in listbox3.tk.splitlist(event.data):
+        listbox3.insert(END,item)
+
+def drop4(event):
+    for item in listbox4.tk.splitlist(event.data):
+        listbox4.insert(END,item)
+
 def add_files_listbox():
     filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
     for item in root.tk.splitlist(filez):
-        listbox.insert(END, item)       
-
-
-
+        listbox.insert(END, item)
 
 def move_up3():
     idxs = listbox3.curselection()
@@ -142,7 +136,7 @@ def move_up3():
         listbox3.delete(pos)
         listbox3.insert(pos-1,text)
         listbox3.selection_set(pos-1)
-        
+
 def move_down3():
     idxs = listbox3.curselection()
     if not idxs:
@@ -155,14 +149,11 @@ def move_down3():
         listbox3.insert(pos+1,text)
         listbox3.selection_set(pos+1)
 
-def drop3(event):
-    for item in listbox3.tk.splitlist(event.data):
-        listbox3.insert(END,item)
-  
+
 def add_files_listbox3():
     filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
     for item in root.tk.splitlist(filez):
-        listbox3.insert(END, item)       
+        listbox3.insert(END, item)
 
 
 def pdf_merge_save():
@@ -176,10 +167,8 @@ def pdf_merge_save():
         out_pdf.write(save_path_stream)
     listbox3.delete(0,END) 
 
-def drop4(event):
-    for item in listbox4.tk.splitlist(event.data):
-        listbox4.insert(END,item)
-        
+
+
 def add_files_listbox_r():
     filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
     for item in root.tk.splitlist(filez):
@@ -214,24 +203,24 @@ def save_as_rot():
                 pdf_out.write(pdf_outstream)
         listbox4.delete(0,END)
 
-
 def add_files_listbox_pdf_excel():
     filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
     for item in root.tk.splitlist(filez):
-        listbox5.insert(END, item)       
+        listbox5.insert(END, item)
 
 def drop5(event):
     for item in listbox5.tk.splitlist(event.data):
         listbox5.insert(END,item)
-        
+
 def save_as_pdf_excel():
     import csv,openpyxl
-    for item in listbox5.get(0,END):
-        filename=os.path.basename(item)
+    for pdf in listbox5.get(0,END):
+        filename=os.path.basename(pdf)
         filename_base=os.path.splitext(filename)[0]
-        output_csv=os.path.join(os.environ['USERPROFILE'] + '\Desktop',filename_base+'.csv')
-        output_xls=os.path.join(os.environ['USERPROFILE'] + '\Desktop',filename_base+'.xlsx')
-        tabula.convert_into(item,output_csv,pages = "all", all=True)
+        output_csv=os.path.join(os.environ['USERPROFILE'], 'Desktop',filename_base+'.csv')
+        output_xls=os.path.join(os.environ['USERPROFILE'], 'Desktop',filename_base+'.xlsx')
+        print(output_csv,output_xls)
+        tabula.convert_into(pdf,output_csv, output_format='csv',pages = "all")
         wb = openpyxl.Workbook()
         ws = wb.active
         with open(output_csv) as f:
@@ -239,10 +228,8 @@ def save_as_pdf_excel():
             for row in reader:
                 ws.append(row)
         wb.save(output_xls)
-                   
-                            
         #tabula.convert_into(item,output,pages = "all", all=True)
-        
+
 
 root = TkinterDnD.Tk()
 root.title("PDF Knife -- A collection of PDF toolkits")
@@ -287,8 +274,8 @@ frame10.grid(row=1,column=0,padx=5, pady=5,sticky=N+E+S+W)
 ###############PDF to Photo GUI#########################
 listbox = Listbox(frame1, width=60)
 listbox.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
-for item in sys.argv[1:]:
-    listbox.insert(END, item)
+#for item in sys.argv[1:]:
+#    listbox.insert(END, item)
 xscrollbar2 = Scrollbar(frame1,orient=HORIZONTAL)
 xscrollbar2.grid(row=1, column=0,sticky=E+W)
 listbox.config(xscrollcommand=xscrollbar2.set)
@@ -310,29 +297,29 @@ button_ok.grid(row=0,column=2,sticky=E)
 ################PDF Grid GUI##########################
 listbox2 = Listbox(frame4, width=60)
 listbox2.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
-for item in sys.argv[1:]:
-    listbox2.insert(END, item)
+#for item in sys.argv[1:]:
+#    listbox2.insert(END, item)
 listbox2.drop_target_register(DND_FILES)
 listbox2.dnd_bind('<<Drop>>', drop2)
 
 CheckV1 = BooleanVar()
-CheckV1.set(False)
-CheckV2 = BooleanVar()
-CheckV2.set(True)
-check1=Checkbutton(frame3,text="Add grid to files?",var=CheckV1)
+CheckV1.set(True)
+#CheckV2 = BooleanVar()
+#CheckV2.set(True)
+check1=Checkbutton(frame3,text="Add scale numbers?",var=CheckV1)
 check1.grid(row=1,column=0,sticky=N+S+W)
-check2=Checkbutton(frame3,text="Add scale numbers?",var=CheckV2)
-check2.grid(row=1,column=1,sticky=N+S+W)
+#check2=Checkbutton(frame3,text="Add scale numbers?",var=CheckV2)
+#check2.grid(row=1,column=1,sticky=N+S+W)
 page_sizes=['A4','A3']
 pg=StringVar()
 pg.set('A4')
 pg_menu=OptionMenu(frame3, pg,*page_sizes)
-pg_menu.grid(row=1,column=2,sticky=N+S+W)
+pg_menu.grid(row=1,column=1,sticky=N+S+W)
 orits=['Portrait','Landscape']
 orit=StringVar()
 orit.set('portrait')
 orit_menu=OptionMenu(frame3, orit,*orits)
-orit_menu.grid(row=1,column=3,sticky=N+S+W)
+orit_menu.grid(row=1,column=2,sticky=N+S+W)
 lab_xy=Label(frame3,text='Grid Size: (pixel)')
 lab_xy.grid(row=2,column=0,sticky=N+S+W)
 x_spin=Spinbox(frame3,from_=10,to=595)
@@ -349,8 +336,8 @@ button_grid.grid(row=3,column=1,sticky=N+S+W)
 ##################PDF Merge GUI#################
 listbox3 = Listbox(frame5, width=60)
 listbox3.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
-for item in sys.argv[1:]:
-    listbox3.insert(END, item)
+#for item in sys.argv[1:]:
+#    listbox3.insert(END, item)
 xscrollbar2 = Scrollbar(frame5,orient=HORIZONTAL)
 xscrollbar2.grid(row=1, column=0,sticky=E+W)
 listbox3.config(xscrollcommand=xscrollbar2.set)
