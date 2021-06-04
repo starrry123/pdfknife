@@ -10,8 +10,6 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4,A3, landscape
 from reportlab.lib.colors import black, blue, red,white,green
 
-
-
 def rotate_page(FileName):
     pdf_writer = PdfFileWriter()
 
@@ -29,7 +27,6 @@ def rotate_page(FileName):
     with open('rotated.pdf', 'wb') as pdf_out:
         pdf_writer.write(pdf_out)
 
-
 def page_orientation (FileName):
     with open(FileName, 'rb') as pdf_in:
         pdf_reader = PdfFileReader(pdf_in)
@@ -38,7 +35,6 @@ def page_orientation (FileName):
         for pageNum in range(pdf_reader.numPages):
             ODegree = pdf_reader.getPage(pageNum).get('/Rotate')
             print ("Page " + str(pageNum+1) + " orientation degrees is " + str(ODegree))
-
 
 def grid_lines(pdf_name=None):
     packet = io.BytesIO()
@@ -93,7 +89,6 @@ def pdf_grid ():
         print('create empty grid file')
         grid_lines()
 
-
 def convert_image():
     folder_selected = filedialog.askdirectory()
 
@@ -102,7 +97,6 @@ def convert_image():
         images = ph.convert_from_path(PDF)
         for i,img in enumerate(images):
             img.save(os.path.join(folder_selected, os.path.splitext(os.path.basename(PDF))[0]+'_'+str(i)+'.jpg'))
-
 
 def drop(event):
     for item in listbox.tk.splitlist(event.data):
@@ -149,12 +143,10 @@ def move_down3():
         listbox3.insert(pos+1,text)
         listbox3.selection_set(pos+1)
 
-
 def add_files_listbox3():
     filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
     for item in root.tk.splitlist(filez):
         listbox3.insert(END, item)
-
 
 def pdf_merge_save():
     out_pdf = PdfFileWriter()
@@ -166,8 +158,6 @@ def pdf_merge_save():
     with open(save_path, 'wb') as save_path_stream:
         out_pdf.write(save_path_stream)
     listbox3.delete(0,END) 
-
-
 
 def add_files_listbox_r():
     filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
