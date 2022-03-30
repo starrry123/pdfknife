@@ -3,6 +3,7 @@ from PyPDF2 import PdfFileWriter, PdfFileReader
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import black,blue,white,red,pink
 from reportlab.lib.pagesizes import A4
+#from reportlab.graphics import renderPDF
 
 xls_text_coords=[[110, 525], [370, 525], [110, 490], [450, 490], [110, 470], [470, 470], [190, 380], [150, 160], [330, 160], [500, 160], [50, 373], [320, 373], [50, 350], [320, 350], [50, 325]]
 sec3=[[120,435,'Woodside KGP'],[120,415,'Burrup Road'],[120,398,'Burrup'],[370,398,'WA'],[530,398,'6714']]
@@ -40,74 +41,74 @@ def GeneratePDF():
 
 def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
 
-    def fillout_static_text(c,alist):
+    def fillout_static_text(canv,alist):
         for text_list in alist:
             x,y,text=text_list
-            c.drawString(x,y,text)
+            canv.drawString(x,y,text)
 
-    def add_watermark(c):
-        c.setFont("Helvetica-Bold", 16); c.setFillColor(red)
-        c.setFillColor(pink)
-        c.setDash(3,2)
-        c.rect(395,670,190,100,stroke=1,fill=1)
-        c.setFillColor(red)
-        c.drawString(400,750,'DRAFT')
-        c.drawString(400,730,'DO NOT USE!')
-        c.drawString(400,690,str(text[0]))
+    def add_watermark(canv):
+        canv.setFont("Helvetica-Bold", 16); canv.setFillColor(red)
+        canv.setFillColor(pink)
+        canv.setDash(3,2)
+        canv.rect(395,670,190,100,stroke=1,fill=1)
+        canv.setFillColor(red)
+        canv.drawString(400,750,'DRAFT')
+        canv.drawString(400,730,'DO NOT USE!')
+        canv.drawString(400,690,str(text[0]))
 
-    def addpage(page,packet):
+    def mergepage(page_i,packet):
         packet.seek(0)
         pdf_buffer = PdfFileReader(packet)
-        page.mergePage(pdf_buffer.getPage(0))
+        page=existing_pdf.getPage(page_i)
+        page.mergePage(pdf_buffer.getPage(page_i))
         output.addPage(page)
         output.write(outputStream)
 
 
     #Page one addon text
-    packet1 = io.BytesIO()
-    c1 = canvas.Canvas(packet1,pagesize = A4)
-    c1.setAuthor('Haitao Han')
-    c1.setFont("Helvetica-Bold", 9); c1.setFillColor(blue);c1.setStrokeColor(blue)
+    packet = io.BytesIO()
+    canv = canvas.Canvas(packet, pagesize = A4)
+    canv.setAuthor('Haitao Han')
+    canv.setFont("Helvetica-Bold", 9); canv.setFillColor(blue);canv.setStrokeColor(blue)
     coords=[[0]*2]*14
     for i in range(0,10):
         coords=tuple(xls_text_coords[i])
         if i==2: #special case: join Asset ID and plant description
-            c1.drawString(coords[0], coords[1]," ".join([text[0],text[3]]))
+            canv.drawString(coords[0], coords[1]," ".join([text[0],text[3]]))
         elif i==6: # special case: append 'Room' to plant location
-            c1.drawString(coords[0], coords[1], 'Room '+text[7])
+            canv.drawString(coords[0], coords[1], 'Room '+text[7])
         else:
             if text[i+1]=='UNKNOWN':
-                c1.setFillColor(red)
+                canv.setFillColor(red)
             else:
-                c1.setFillColor(blue)
-            c1.drawString(coords[0], coords[1],str(text[i+1]))
+                canv.setFillColor(blue)
+            canv.drawString(coords[0], coords[1],str(text[i+1]))
     #Fill out common area text
-    c1.setFont("Helvetica-Bold", 14)
-    c1.drawString(135,645,'✓') # new registration
+    canv.setFont("Helvetica-Bold", 14)
+    canv.drawString(135,645,'✓') # new registration
     if text[7] != 'UNKNOWN':
-        c1.drawString(220,185,'✓') # mark as design rego
+        canv.drawString(220,185,'✓') # mark as design rego
     else:
-        c1.drawString(260,185,'✓') # mark as no design rego
-    c1.setFont("Helvetica-Bold", 9)
-    fillout_static_text(c1,sec3)
-    fillout_static_text(c1,sec4)
-    fillout_static_text(c1,sec5)
-    add_watermark(c1)
-    c1.save()
-    
+        canv.drawString(260,185,'✓') # mark as no design rego
+    canv.setFont("Helvetica-Bold", 9)
+    fillout_static_text(canv,sec3)
+    fillout_static_text(canv,sec4)
+    fillout_static_text(canv,sec5)
+    add_watermark(canv)
+    canv.showPage()
+
     #Page two addon text
-    packet2 = io.BytesIO()
-    c2 = canvas.Canvas(packet2,pagesize = A4)
-    c2.setFont("Helvetica-Bold", 9); c2.setFillColor(blue);c2.setStrokeColor(blue)
+    #canv = canv.canv(packet,pagesize = A4)
+    canv.setFont("Helvetica-Bold", 9); canv.setFillColor(blue);canv.setStrokeColor(blue)
     coords=[[0]*2]*14
     pre_text=['Design Pressure: ', 'Design Temperature: ', 'Volume: ', 'Content Class: ', 'Hazard Level: ']
     for i in range(10,len(xls_text_coords)):
         coords=tuple(xls_text_coords[i])
-        c2.drawString(coords[0], coords[1],pre_text[i-10]+text[i+1])
-    fillout_static_text(c2,sec7)
-    fillout_static_text(c2,sec8)
-    add_watermark(c2)
-    c2.save()
+        canv.drawString(coords[0], coords[1],pre_text[i-10]+text[i+1])
+    fillout_static_text(canv,sec7)
+    fillout_static_text(canv,sec8)
+    add_watermark(canv)
+    canv.save()
     
     outputStream = open(pdf_output, "wb")
     output = PdfFileWriter()
@@ -122,8 +123,8 @@ def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
         outputStream.write(packet.getvalue())
     else:  
         existing_pdf = PdfFileReader(open(pdf_name, "rb"))
-        addpage(existing_pdf.getPage(0),packet1)
-        addpage(existing_pdf.getPage(1),packet2)
+        for page_i in range(existing_pdf.numPages):
+            mergepage(page_i,packet) 
 
     outputStream.close()
     #os.startfile(pdf_output,'open')
