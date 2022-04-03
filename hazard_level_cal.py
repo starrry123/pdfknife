@@ -1,7 +1,6 @@
-# This script is used to bulk generate hazard level
+# This script is used to calculate MHF hazard level
 import openpyxl, re
 from prettytable import PrettyTable
- 
 
 def hazard_level_check():
     xls=r'form101_list.xlsx'
