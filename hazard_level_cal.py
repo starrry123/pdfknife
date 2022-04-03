@@ -1,9 +1,5 @@
 # This script is used to bulk generate Western Australia Plant Registration form 101w
 import openpyxl, io, os,re
-from PyPDF2 import PdfFileWriter, PdfFileReader
-from reportlab.pdfgen import canvas
-from reportlab.lib.colors import black,blue,white,red,pink
-from reportlab.lib.pagesizes import A4
 from prettytable import PrettyTable
  
 
