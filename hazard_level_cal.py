@@ -1,5 +1,5 @@
-# This script is used to bulk generate Western Australia Plant Registration form 101w
-import openpyxl, io, os,re
+# This script is used to calculate MHF PE hazard level
+import openpyxl, re
 from prettytable import PrettyTable
  
 
