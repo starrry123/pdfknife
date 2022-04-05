@@ -33,6 +33,7 @@ def GeneratePDF():
     
         pdf_name='form201.pdf' # place the file under same path with this script  
         pdf_output=str(asset_id)+'_FORM201(DRAFT).pdf'
+        print("Generating File: "+pdf_output)
         write_pdf(pdf_name,pdf_output, text,xls_text_coords)
         
     wb.close()
@@ -87,7 +88,7 @@ def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
         else:
             canv.drawString(coords[0], coords[1],pre_text[i-10]+text[i+1])
 #    fillout_static_text(canv,sec1)
-    canv.setFont("Helvetica-Bold", 14);canv.drawString(93,660,'X')
+    canv.setFont("Helvetica-Bold", 14);canv.drawString(30,660,'X')
     canv.setFont("Helvetica-Bold", 9);canv.drawString(72,580,'X')
     fillout_static_text(canv,sec2)
     add_watermark(canv)
