@@ -2,13 +2,18 @@
 import openpyxl, io, os
 from PyPDF2 import PdfFileWriter, PdfFileReader
 from reportlab.pdfgen import canvas
-from reportlab.lib.colors import black,blue,white,red,pink
+from reportlab.lib.colors import black,blue,white,red, Color
 from reportlab.lib.pagesizes import A4
 
-xls_text_coords=[[130,450],[330,450],[130,423],[460,423],[130,400],[460,400],[130,333],
-    [130,285],[300,285],[460,285],
+xls_text_coords=[[130,450],[330,450],[130,423],[460,423],[130,400],[460,400],[130,335],
+    [130,290],[300,290],[460,290],
     [50,242],[300,242],[50,218],[300,218],[50,195],[130,135]]
 sec2=[[130,380,'Burrup Road'],[130,360,'Burrup'],[330,360,'WA'],[460,360,'6714']]
+sec678=[[460,652,'WOODSIDE ENERGY LTD.'],[460,635,'Juan Nicklaus'],[460,615,'WOODSIDE ENERGY LTD.'],[460,595,'005 482 986'],
+                [330,572,'11 Mount St'],[330,552,'Perth'],[510,552,'6000'],[330,530,'companyinfo@woodside.com.au'],[330,512,'08 9348 4000'],
+                [313,405,'X'],[60,325,'JUAN.NICKLAUS@woodside.com.au'], [60,198,'Juan Nicklaus']]
+
+
 
 def GeneratePDF():
     xls=r'form_list.xlsx'
@@ -46,14 +51,15 @@ def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
             canv.drawString(x,y,text)
 
     def add_watermark(canv):
-        canv.setFont("Helvetica-Bold", 16); canv.setFillColor(red)
-        canv.setFillColor(pink)
-        canv.setDash(3,2)
-        canv.rect(395,670,190,100,stroke=1,fill=1)
+        canv.setFont("Helvetica-Bold", 14)
+        bg_transparent=Color(100,0,0,alpha=0.4)
         canv.setFillColor(red)
-        canv.drawString(400,750,'DRAFT')
-        canv.drawString(400,730,'DO NOT USE!')
-        canv.drawString(400,690,str(text[0]))
+        canv.setFillColor(bg_transparent)
+        canv.setDash(3,2)
+        canv.rect(400,740,190,65,stroke=0,fill=1)
+        canv.setFillColor(red)
+        canv.drawString(410,785,'DRAFT -- DO NOT USE')
+        canv.drawString(410,750,str(text[0]))
 
     def mergepage(page_i,packet):
         packet.seek(0)
@@ -96,11 +102,15 @@ def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
     canv.showPage()
 
     #Add 2nd page text
+    #Fill out Applicant details
     canv.setFont("Helvetica-Bold", 9); canv.setFillColor(blue);canv.setStrokeColor(blue)
+    canv.drawString(310,675,'X') #mark body corporate/company
+    fillout_static_text(canv,sec678)
     add_watermark(canv)
     canv.showPage()
     
     #Add 3rd page text
+    #FILL out payment details
     canv.showPage()
     canv.save()
 
