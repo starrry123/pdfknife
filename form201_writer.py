@@ -1,5 +1,5 @@
 # This script is used to bulk generate Western Australia Plant Registration form 201
-import openpyxl, io, os
+import openpyxl, io, os,re
 from PyPDF2 import PdfFileWriter, PdfFileReader
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import black,blue,white,red, Color
@@ -7,13 +7,12 @@ from reportlab.lib.pagesizes import A4
 
 xls_text_coords=[[130,450],[330,450],[130,423],[460,423],[130,400],[460,400],[130,335],
     [130,290],[300,290],[460,290],
-    [50,242],[300,242],[50,218],[300,218],[50,195],[130,135]]
+    [50,242],[300,242],[50,218],[300,218],[50,195],
+    [130,135]]
 sec2=[[130,380,'Burrup Road'],[130,360,'Burrup'],[330,360,'WA'],[460,360,'6714']]
-sec678=[[460,652,'WOODSIDE ENERGY LTD.'],[460,635,'Juan Nicklaus'],[460,615,'WOODSIDE ENERGY LTD.'],[460,595,'005 482 986'],
+sec678=[[440,652,'WOODSIDE ENERGY LTD.'],[440,635,'Juan Nicklaus'],[440,615,'WOODSIDE ENERGY LTD.'],[440,595,'005 482 986'],
                 [330,572,'11 Mount St'],[330,552,'Perth'],[510,552,'6000'],[330,530,'companyinfo@woodside.com.au'],[330,512,'08 9348 4000'],
                 [313,405,'X'],[60,325,'JUAN.NICKLAUS@woodside.com.au'], [60,198,'Juan Nicklaus']]
-
-
 
 def GeneratePDF():
     xls=r'form_list.xlsx'
@@ -42,6 +41,19 @@ def GeneratePDF():
         write_pdf(pdf_name,pdf_output, text,xls_text_coords)
         
     wb.close()
+
+def plant_location(asset_id):
+    pat=re.match(r'Au01\.(\d*)([a-zA-Z]+)(\d+)',asset_id)
+    loc='Karratha Gas Plant '
+    if pat is not None:
+        unit=pat.group(3)[0:2]
+        if pat.group(1).isnumeric():
+            loc+=' Train '+pat.group(1)+' Unit '+unit+'00'
+        elif pat.group(2) in ['A','GT']:
+            loc+='Utility Unit '+ unit +'00'
+        else:
+            loc+='Unit '+ unit +'00'
+        return loc
 
 def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
 
@@ -77,40 +89,38 @@ def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
     canv.setFont("Helvetica-Bold", 9); canv.setStrokeColor(blue)
     coords=[[0]*2]*14
     for i in range(0,len(xls_text_coords)):
+        if text[i+1]=='UNKNOWN':
+            canv.setFillColor(red)
+        else:
+            canv.setFillColor(blue)
         coords=tuple(xls_text_coords[i])
         if i <10:
             if i==2: #special case: join Asset ID and plant description
                 canv.drawString(coords[0], coords[1]," ".join([text[0],text[3]]))
             elif i==6: # special case: append 'Room' to plant location
-                canv.drawString(coords[0], coords[1], 'Room '+text[7])
+                canv.drawString(coords[0], coords[1], plant_location(text[0]))
             else:
-                if text[i+1]=='UNKNOWN':
-                    canv.setFillColor(red)
-                else:
-                    canv.setFillColor(blue)
+
                 canv.drawString(coords[0], coords[1],str(text[i+1]))
         elif i==15:
             canv.drawString(coords[0], coords[1],text[i+1])
         else:
             canv.drawString(coords[0], coords[1],pre_text[i-10]+text[i+1])
-#    fillout_static_text(canv,sec1)
+    canv.setFillColor(blue)
     canv.setFont("Helvetica-Bold", 14);canv.drawString(30,660,'X')
     canv.setFont("Helvetica-Bold", 9);canv.drawString(72,580,'X')
     fillout_static_text(canv,sec2)
     add_watermark(canv)
-    #Fill out section 1 application for registration
     canv.showPage()
 
-    #Add 2nd page text
-    #Fill out Applicant details
+    #Add 2nd page text: Applicant details
     canv.setFont("Helvetica-Bold", 9); canv.setFillColor(blue);canv.setStrokeColor(blue)
     canv.drawString(310,675,'X') #mark body corporate/company
     fillout_static_text(canv,sec678)
     add_watermark(canv)
     canv.showPage()
     
-    #Add 3rd page text
-    #FILL out payment details
+    #Add 3rd page text: Payment details
     canv.showPage()
     canv.save()
 
@@ -120,8 +130,7 @@ def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
         '/Author': 'Haitao Han, haitao.han@applus.com',
         '/Title': 'WorkSafe Plant Registration Form 201',
         '/Subject':'Woodside KGP plant registration application form',
-        '/Keywords': text[0],
-        '/Producer': 'Hans PDF Generator'
+        '/Keywords': text[0]
     })
     if not pdf_name:
         outputStream.write(packet.getvalue())
@@ -131,7 +140,7 @@ def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
             mergepage(page_i,packet) 
 
     outputStream.close()
-    #os.startfile(pdf_output,'open')
+    os.startfile(pdf_output,'open')
 
 if __name__ == '__main__':
     GeneratePDF()
