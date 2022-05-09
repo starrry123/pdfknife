@@ -9,10 +9,27 @@ xls_text_coords=[[130,450],[330,450],[130,423],[460,423],[130,400],[460,400],[13
     [130,290],[300,290],[460,290],
     [50,242],[300,242],[50,218],[300,218],[50,195],
     [130,135]]
-sec2=[[130,380,'Burrup Road'],[130,360,'Burrup'],[330,360,'WA'],[460,360,'6714']]
-sec678=[[440,652,'WOODSIDE ENERGY LTD.'],[440,635,'Juan Nicklaus'],[440,615,'WOODSIDE ENERGY LTD.'],[440,595,'005 482 986'],
-                [330,572,'11 Mount St'],[330,552,'Perth'],[510,552,'6000'],[330,530,'companyinfo@woodside.com.au'],[330,512,'08 9348 4000'],
-                [313,405,'X'],[60,325,'JUAN.NICKLAUS@woodside.com.au'], [60,198,'Juan Nicklaus']]
+sec2=[[130,380,'BURRUP ROAD'],[130,360,'BURRUP'],[330,360,'WA'],[460,360,'6714']]
+sec678=[[440,652,'WOODSIDE ENERGY LTD.'],[440,635,'JUAN NICKLAUS'],[440,615,'WOODSIDE ENERGY LTD.'],[440,595,'005 482 986'],
+                [330,572,'11 MOUNT ST'],[330,552,'PERTH'],[510,552,'6000'],[330,530,'JUAN.NICKLAUS@WOODSIDE.COM.AU'],[330,512,'08 9348 4000'],
+                [313,405,'X'],[60,325,'JUAN.NICKLAUS@WOODSIDE.COM.AU'], [60,198,'JUAN NICKLAUS']]
+sec_payment=[[215,585],
+[95, 558], [115, 558], [135, 558], [155, 558],
+[195, 558], [215, 558], [235, 558], [255, 558],
+[295, 558], [315, 558], [335, 558], [355, 558],
+[395, 558], [415, 558], [435, 558], [452, 558],
+[100,533],
+[95,500],[115,500], [158,500],[175,500],
+[210,445]]
+payment_text=['X',
+    '4','8','6','5','0','1','1','0','0','0','4','7','1','2','0','4',
+    'SHAYE STYLE',
+    '0','2','2','3',
+    '08 9348 4000']
+payment_info_list=[]
+for i in range(len(sec_payment)):
+    x,y=sec_payment[i]
+    payment_info_list.append([x,y,payment_text[i]])
 
 def GeneratePDF():
     xls=r'form_list.xlsx'
@@ -27,26 +44,33 @@ def GeneratePDF():
  
     #read in coordinate to a list
     for i in range(entry_no):
-        for j in range(col_num):
-            cellvalue=ws.cell(row=3+i, column=j+1).value
-            if cellvalue is not None:
-                text[j]=cellvalue
-            else:
-                text[j]='UNKNOWN'
-        asset_id=text[0]
-    
-        pdf_name='form201.pdf' # place the file under same path with this script  
-        pdf_output=str(asset_id)+'_FORM201(DRAFT).pdf'
-        print("Generating File: "+pdf_output)
-        write_pdf(pdf_name,pdf_output, text,xls_text_coords)
+        register_flag=ws.cell(row=3+i,column=18).value
+        if register_flag is not None:
+            print(ws.cell(row=3+i,column=1).value + '  SKIPPING...' +register_flag)
+        else:
+            for j in range(col_num):
+                cellvalue=ws.cell(row=3+i, column=j+1).value
+                if cellvalue is not None:
+                    text[j]=cellvalue
+                else:
+                    text[j]='UNKNOWN'
+            asset_id=text[0]
         
+            pdf_name='form201.pdf' # place the file under same path with this script  
+            pdf_output=re.sub('^AU01.','',asset_id)+'_FORM201(DRAFT).pdf'
+            print("Generating File: "+pdf_output+' '+asset_id+' '+plant_location(asset_id))
+            write_pdf(pdf_name,pdf_output, text,xls_text_coords)
+            
     wb.close()
 
 def plant_location(asset_id):
-    pat=re.match(r'Au01\.(\d*)([a-zA-Z]+)(\d+)',asset_id)
+    pat=re.match(r'AU01\.(\d*)([a-zA-Z]+)(\d+)',asset_id)
     loc='Karratha Gas Plant '
     if pat is not None:
-        unit=pat.group(3)[0:2]
+        if len(pat.group(1))==3:
+            unit=pat.group(1)[1:3]
+        else:
+            unit=pat.group(3)[0:2]
         if pat.group(1).isnumeric():
             loc+=' Train '+pat.group(1)+' Unit '+unit+'00'
         elif pat.group(2) in ['A','GT']:
@@ -103,7 +127,7 @@ def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
 
                 canv.drawString(coords[0], coords[1],str(text[i+1]))
         elif i==15:
-            canv.drawString(coords[0], coords[1],text[i+1])
+            canv.drawString(coords[0], coords[1],str(text[i+1]))
         else:
             canv.drawString(coords[0], coords[1],pre_text[i-10]+text[i+1])
     canv.setFillColor(blue)
@@ -121,6 +145,8 @@ def write_pdf(pdf_name,pdf_output,text,xls_text_coords):
     canv.showPage()
     
     #Add 3rd page text: Payment details
+    canv.setFont("Helvetica-Bold", 14); canv.setFillColor(blue)
+    fillout_static_text(canv,payment_info_list)
     canv.showPage()
     canv.save()
 
