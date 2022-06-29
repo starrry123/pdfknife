@@ -45,16 +45,19 @@ def grid_lines(pdf_name=None):
     c.setStrokeColor(blue); c.setLineWidth(0)
     w,h=eval(pg.get()) #get page size
     x_step,y_step=int(x_spin.get()),int(y_spin.get())
-    x,y = 0, 0
+    deg=int(deg_spin.get())   
+    x,y = -w, -h
+    c.rotate(deg)    
+
     while x < w or y< h: 
-        c.line(x, 0, x, h)
+        c.line(x, -h, x, h)
         c.setFillColor(red)
         if CheckV1.get():
             c.drawString(x,10,str(int(x/10)))
             c.drawString(x,830,str(int(x/10)))
             c.drawString(20,y,str(int(y/10)))
             c.drawString(570,y,str(int(y/10)))
-        c.line(0, y, w, y)
+        c.line(0, y, 2*w, y)
         c.setFillColor(red)        
         x += x_step
         y += y_step
@@ -317,11 +320,18 @@ x_spin.grid(row=2,column=1,sticky=N+S+W)
 y_spin=Spinbox(frame3,from_=10,to=842)
 y_spin.grid(row=2,column=2,sticky=N+S+W)
 
+lab_deg1=Label(frame3,text='Rotate Degree: ')
+lab_deg1.grid(row=3,column=0,sticky=N+S+W)
+deg_spin=Spinbox(frame3,from_=0,to=90)
+deg_spin.grid(row=3,column=1,sticky=N+S+W)
+lab_deg2=Label(frame3,text='°')
+lab_deg2.grid(row=3,column=2,sticky=N+S+W)
+
 button_clearfile2 = Button(frame3, text='➖ Clear List')
-button_clearfile2.grid(row=3,column=0,sticky=N+S+E+W)
+button_clearfile2.grid(row=4,column=0,sticky=N+S+E+W)
 button_clearfile2.bind("<Button-1>", lambda e: listbox2.delete(0,END))
 button_grid = Button(frame3,command=pdf_grid, text="Create PDF grid",bg='gold')
-button_grid.grid(row=3,column=1,sticky=N+S+W)
+button_grid.grid(row=4,column=1,sticky=N+S+W)
 
 ##################PDF Merge GUI#################
 listbox3 = Listbox(frame5, width=60)
