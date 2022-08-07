@@ -9,6 +9,8 @@ from PyPDF2 import PdfFileWriter, PdfFileReader
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4,A3, landscape
 from reportlab.lib.colors import black, blue, red,white,green
+from PIL import Image
+
 
 def rotate_page(FileName):
     pdf_writer = PdfFileWriter()
@@ -205,6 +207,10 @@ def drop5(event):
     for item in listbox5.tk.splitlist(event.data):
         listbox5.insert(END,item)
 
+def drop6(event):
+    for item in listbox6.tk.splitlist(event.data):
+        listbox6.insert(END,item)
+        
 def save_as_pdf_excel():
     import csv,openpyxl
     for pdf in listbox5.get(0,END):
@@ -223,7 +229,29 @@ def save_as_pdf_excel():
         wb.save(output_xls)
         #tabula.convert_into(item,output,pages = "all", all=True)
 
+def add_files_listbox_img2pdf():
+    filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
+    for item in root.tk.splitlist(filez):
+        listbox6.insert(END, item)
 
+def save_img2pdf():
+    save_path=filedialog.asksaveasfilename(parent=root, title='Save PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')    
+    packet = io.BytesIO()
+    can = canvas.Canvas(packet)    
+    for img in listbox6.get(0,END):
+        listbox6.delete(0)
+        can.setPageSize(Image.open(img).size)
+        can.drawImage(img, 0, 0, preserveAspectRatio=True)
+        can.showPage()
+    can.save()
+    packet.seek(0)
+    outputStream = open(save_path, "wb")
+    output = PdfFileWriter()
+    outputStream.write(packet.getvalue())
+    outputStream.close()
+
+
+        
 root = TkinterDnD.Tk()
 root.title("PDF Knife -- A collection of PDF toolkits")
 tab=ttk.Notebook(root)
@@ -240,6 +268,9 @@ tab.add(tab4,text='PDF rotate')
 tab.pack(expand=1,fill='both')
 tab5=ttk.Frame(tab)
 tab.add(tab5,text='PDF2Excel')
+tab.pack(expand=1,fill='both')
+tab6=ttk.Frame(tab)
+tab.add(tab6,text='Image2PDF')
 tab.pack(expand=1,fill='both')
 
 frame1=LabelFrame(tab1,text="Drop PDF files here")
@@ -264,6 +295,10 @@ frame9.grid(row=0,column=0,padx=5, pady=5,sticky=N+E+S+W)
 frame10=LabelFrame(tab5,text="List Operation")
 frame10.grid(row=1,column=0,padx=5, pady=5,sticky=N+E+S+W)
 
+frame11=LabelFrame(tab6,text="Convert Images to PDF")
+frame11.grid(row=0,column=0,padx=5, pady=5,sticky=N+E+S+W)
+frame12=LabelFrame(tab6,text="Image List")
+frame12.grid(row=1,column=0,padx=5, pady=5,sticky=N+E+S+W)
 ###############PDF to Photo GUI#########################
 listbox = Listbox(frame1, width=60)
 listbox.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
@@ -399,5 +434,19 @@ button_clearfile_pdf_excel.grid(row=1,column=1,sticky=N+S+E+W)
 button_clearfile_pdf_excel.bind("<Button-1>", lambda e: listbox5.delete(0,END))
 button_ok_pdf_excel = Button(frame10,command=save_as_pdf_excel, text="Save Excel",bg='gold')
 button_ok_pdf_excel.grid(row=1,column=2,sticky=N+E+S+W)
+
+##################CONVERT IMAGE TO PDF GUI#################
+listbox6 = Listbox(frame11, width=60)
+listbox6.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
+listbox6.drop_target_register(DND_FILES)
+listbox6.dnd_bind('<<Drop>>', drop6)
+
+button_addfile_img2pdf = Button(frame12, command=add_files_listbox_img2pdf,text='➕ Add Files ')
+button_addfile_img2pdf.grid(row=1,column=0,sticky=N+S+E+W)
+button_clearfile_img2pdf = Button(frame12, text='➖ Clear List')
+button_clearfile_img2pdf.grid(row=1,column=1,sticky=N+S+E+W)
+button_clearfile_img2pdf.bind("<Button-1>", lambda e: listbox6.delete(0,END))
+button_ok_img2pdf = Button(frame12,command=save_img2pdf, text="Save PDF",bg='gold')
+button_ok_img2pdf.grid(row=1,column=2,sticky=N+E+S+W)
 
 root.mainloop()
