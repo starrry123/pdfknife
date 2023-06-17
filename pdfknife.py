@@ -2,15 +2,15 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox #for messagebox.
 from tkinter import filedialog
-from TkinterDnD2 import *
+from tkinterdnd2 import DND_FILES, TkinterDnD
 import pdf2image as ph
-import os,io,datetime, tabula,copy
+import os,io,datetime, tabula,copy, re
 from PyPDF2 import PdfFileWriter, PdfFileReader
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4,A3, landscape
 from reportlab.lib.colors import black, blue, red,white,green
-from PIL import Image
-
+from PIL import Image, ImageDraw
+import io, time, pyautogui
 
 def rotate_page(FileName):
     pdf_writer = PdfFileWriter()
@@ -44,7 +44,7 @@ def grid_lines(pdf_name=None):
     c.setFont('Helvetica-Bold',6)
     c.setFillColor(red)
     c.setDash(2,1)
-    c.setStrokeColor(blue); c.setLineWidth(0)
+    c.setStrokeColor(black); c.setLineWidth(0)
     w,h=eval(pg.get()) #get page size
     x_step,y_step=int(x_spin.get()),int(y_spin.get())
     deg=int(deg_spin.get())   
@@ -119,6 +119,10 @@ def drop4(event):
     for item in listbox4.tk.splitlist(event.data):
         listbox4.insert(END,item)
 
+def drop7(event):
+    for item in listbox7.tk.splitlist(event.data):
+        listbox7.insert(END,item)
+
 def add_files_listbox():
     filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
     for item in root.tk.splitlist(filez):
@@ -155,7 +159,8 @@ def add_files_listbox3():
 
 def pdf_merge_save():
     out_pdf = PdfFileWriter()
-    save_path=filedialog.asksaveasfilename(parent=root, title='Save New PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')
+    save_path=filedialog.asksaveasfilename(parent=root, initialdir=os.path.dirname(os.path.abspath(listbox3.get(0))),title='Save New PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')
+    print(save_path)
     for item in listbox3.get(0,END):
         source_pdf = PdfFileReader(open(item,'rb'),strict=False)
         for p in range(source_pdf.getNumPages()):         
@@ -170,7 +175,7 @@ def add_files_listbox_r():
         listbox4.insert(END, item)
 
 def save_as_rot():
-    #save_path=filedialog.asksaveasfilename(parent=root, title='Save New PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')
+    save_path=filedialog.asksaveasfilename(parent=root, initialdir=os.path.dirname(os.path.abspath(listbox4.get(0))),title='Save New PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')
     deg=int(re.sub('(\d+)°','\g<1>',degs.get()))
     print (deg)
     page_str= re.split(',| ',pages_r.get().strip())
@@ -193,7 +198,7 @@ def save_as_rot():
                 if pageNum  in page_list or not page_list:
                     page.rotateClockwise(deg)
                 pdf_out.addPage(page)
-            save_path=os.path.splitext(os.path.abspath(pdf))[0]+'_r.pdf'
+            #save_path=os.path.splitext(os.path.abspath(pdf))[0]+'_r.pdf'
             with open(save_path, 'wb') as pdf_outstream:
                 pdf_out.write(pdf_outstream)
         listbox4.delete(0,END)
@@ -234,23 +239,132 @@ def add_files_listbox_img2pdf():
     for item in root.tk.splitlist(filez):
         listbox6.insert(END, item)
 
-def save_img2pdf():
-    save_path=filedialog.asksaveasfilename(parent=root, title='Save PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')    
+
+def save_img2pdf(img_list,filename):
     packet = io.BytesIO()
-    can = canvas.Canvas(packet)    
-    for img in listbox6.get(0,END):
-        listbox6.delete(0)
-        can.setPageSize(Image.open(img).size)
-        can.drawImage(img, 0, 0, preserveAspectRatio=True)
+    can = canvas.Canvas(packet, pageCompression=1)    
+    for img in img_list:
+        can.setPageSize(img.size)
+        can.drawInlineImage(img, 0, 0, preserveAspectRatio=True)
         can.showPage()
     can.save()
     packet.seek(0)
-    outputStream = open(save_path, "wb")
-    output = PdfFileWriter()
+    outputStream = open(filename, "wb")
     outputStream.write(packet.getvalue())
     outputStream.close()
 
+def add_pdf_fmg():
+    filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
+    for item in root.tk.splitlist(filez):
+        listbox7.insert(END, item)
 
+def pdf_compress(filename):
+    output_filename=os.path.join(os.path.dirname(filename),os.path.splitext(os.path.basename(filename))[0]+'_compressed.pdf')
+    with open(filename, 'rb') as file:
+        # Create a PDF object
+        pdf = PdfFileReader(file)
+        
+        # Create a new PDF file
+        output = PdfFileWriter()
+        
+        # Iterate through each page of the original PDF
+        for page in range(pdf.getNumPages()):
+            # Get the current page
+            current_page = pdf.getPage(page)
+            
+            # Compress the page
+            current_page.compressContentStreams()
+            
+            # Add the compressed page to the new PDF
+            output.addPage(current_page)
+        
+        # Save the compressed PDF to a file
+        with open(output_filename, 'wb') as output_file:
+            output.write(output_file)
+    os.rename(output_filename, filename,output_filename)
+
+def pdf_fmg_rename():
+    from PyPDF2 import PdfFileReader
+    for filename in listbox7.get(0,END):
+        listbox7.delete(0)
+        asset_id=os.path.basename(os.path.dirname(filename))  
+        with open(filename,'rb') as fp:
+            PDFIN=PdfFileReader(fp)
+            print(PDFIN.getDocumentInfo())
+            createdate=PDFIN.getDocumentInfo()['/CreationDate']
+        m=re.search(r'^D:(\d{4})(\d{2})(\d{2})(\d{6}\+)\d',createdate)
+        if m is not None:
+            date_stamp=m.group(1)+m.group(2)+m.group(3)
+            newfile_name=asset_id+'_'+date_stamp+' Report.pdf'
+            newfile_path=os.path.dirname(filename)+'/'+newfile_name
+            os.rename(filename, newfile_path)
+            #if os.path.getsize(newfile_path) > 2 * 1024 * 1024:  # 2MB
+            #    pdf_compress(newfile_path)
+def save_img2pdf(img_list,save_pdf):
+    packet = io.BytesIO()
+    can = canvas.Canvas(packet)    
+    for img in img_list:
+        can.setPageSize(img.size)
+        can.drawInlineImage(img, 0, 0, preserveAspectRatio=True)
+        can.showPage()
+    can.save()
+    packet.seek(0)
+    outputStream = open(save_pdf, "wb")
+    outputStream.write(packet.getvalue())
+    outputStream.close()
+
+def page_screenshot(total_pages=1, bbox=(2204, 103, 895, 1271)):
+    pyautogui.FAILSAFE = False # set pyautogui.FAILSAFE to False. DISABLING FAIL-SAFE IS NOT RECOMMENDED.
+    # Delay between capturing screenshots and pressing Page Down
+    delay = 0.1  # Adjust the delay as needed
+    #print('starting in 5 seconds...')
+    #time.sleep(5)
+    img_list=[]
+    # Loop through the pages
+    for page in range(total_pages):
+        # Capture the screenshot within the bounding box
+        screenshot = pyautogui.screenshot(region=bbox)
+        mask_regions=[(0, 0, 50, bbox[3]),(0,0,bbox[2],5), (bbox[2],bbox[3],-5, bbox[3]), (bbox[2],bbox[3],bbox[2], bbox[3]-3)]
+        draw=ImageDraw.Draw(screenshot)
+        for region in mask_regions:
+            draw.rectangle(region,fill=(255,255,255))
+        img_list.append(screenshot)
+        pyautogui.press('pagedown')
+        time.sleep(delay)
+    return img_list
+
+def pdf_screenshot():
+    save_path=filedialog.asksaveasfilename(parent=root, initialdir=os.path.dirname(os.path.abspath(listbox3.get(0))),title='Save New PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')
+    img_list=page_screenshot()
+    save_img2pdf(img_list,save_path)
+
+# Function to handle Save button click
+def save_button_click():
+    #Define output PDF filename
+    filename= filedialog.asksaveasfilename(title='Choose a file')
+    #Number of pages to capture
+    #total_pages = get_page_number()
+    total_pages = int(entries[4].get())
+    # Specify the bounding box to capture
+    top_left_x = int(entries[0].get())  # Assuming "TopLeft-X" entry is at index 0 in the 'entries' list
+    top_left_y = int(entries[1].get())  # Assuming "TopLeft-Y" entry is at index 1 in the 'entries' list
+    width = int(entries[2].get())  # Assuming "Width" entry is at index 2 in the 'entries' list
+    height = int(entries[3].get())  # Assuming "Height" entry is at index 3 in the 'entries' list
+    screen_region = (top_left_x, top_left_y, width, height)
+    #screen_region = (2204, 103, 895, 1271)  # (left, top, width, height) #THIS IS FOR PDF-XChange Editor
+    #screen_region = (2062, 44, 985, 1388) #THIS IS FOR www.saiglobal.com online view
+    #snip a region of screen and save as image, then use pyautogui.locateOnScreen()to get bbox reading
+    #import pyautogui
+    #location = pyautogui.locateOnScreen('image.png')
+    if filename != '':
+        time.sleep(5)
+        img_list=page_screenshot(total_pages,screen_region)
+        save_img2pdf(img_list,filename)
+        print('PDF successfully generate!')
+        os.startfile(filename)        
+
+img_list=page_screenshot()
+save_img2pdf(img_list,'TEST.pdf')
         
 root = TkinterDnD.Tk()
 root.title("PDF Knife -- A collection of PDF toolkits")
@@ -271,6 +385,9 @@ tab.add(tab5,text='PDF2Excel')
 tab.pack(expand=1,fill='both')
 tab6=ttk.Frame(tab)
 tab.add(tab6,text='Image2PDF')
+tab.pack(expand=1,fill='both')
+tab7=ttk.Frame(tab)
+tab.add(tab7,text='PDF Screenshot')
 tab.pack(expand=1,fill='both')
 
 frame1=LabelFrame(tab1,text="Drop PDF files here")
@@ -299,6 +416,10 @@ frame11=LabelFrame(tab6,text="Convert Images to PDF")
 frame11.grid(row=0,column=0,padx=5, pady=5,sticky=N+E+S+W)
 frame12=LabelFrame(tab6,text="Image List")
 frame12.grid(row=1,column=0,padx=5, pady=5,sticky=N+E+S+W)
+
+frame13=LabelFrame(tab7,text="PDF Screenshot")
+frame13.grid(row=0,column=0,padx=5, pady=5,sticky=N+E+S+W)
+
 ###############PDF to Photo GUI#########################
 listbox = Listbox(frame1, width=60)
 listbox.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
@@ -448,5 +569,59 @@ button_clearfile_img2pdf.grid(row=1,column=1,sticky=N+S+E+W)
 button_clearfile_img2pdf.bind("<Button-1>", lambda e: listbox6.delete(0,END))
 button_ok_img2pdf = Button(frame12,command=save_img2pdf, text="Save PDF",bg='gold')
 button_ok_img2pdf.grid(row=1,column=2,sticky=N+E+S+W)
+
+##################CHANGE PDF NAME#################
+# listbox7 = Listbox(frame13, width=60)
+# listbox7.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
+# listbox7.drop_target_register(DND_FILES)
+# listbox7.dnd_bind('<<Drop>>', drop7)
+
+# button_addfile_fmg2pdf = Button(frame14, command=add_pdf_fmg,text='➕ Add Files ')
+# button_addfile_fmg2pdf.grid(row=1,column=0,sticky=N+S+E+W)
+# button_clearfile_fmg2pdf = Button(frame14, text='➖ Clear List')
+# button_clearfile_fmg2pdf.grid(row=1,column=1,sticky=N+S+E+W)
+# button_clearfile_fmg2pdf.bind("<Button-1>", lambda e: listbox7.delete(0,END))
+# button_ok_fmg2pdf = Button(frame14,command=pdf_fmg_rename, text="Save PDF",bg='gold')
+# button_ok_fmg2pdf.grid(row=1,column=2,sticky=N+E+S+W)
+
+
+################PDF SCREENSHOT GUI##########################
+# Create the label for the countdown text
+countdown_label = Label(frame13, text="Switch App focus before 5s countdown")
+countdown_label.grid(row=1, column=0, padx=10, pady=10)
+
+# Create a labeled frame for the screenshot region
+frame = LabelFrame(frame13, text="Screenshot Region")
+frame.grid(row=2, column=0, padx=10, pady=10)
+
+# Create labels and entry fields for TopLeft-X, TopLeft-Y, Width, Height, and Total Page
+labels = ["TopLeft-X", "TopLeft-Y", "Width", "Height", "Total Page"]
+entries = []
+
+default_values = [2204, 103, 895, 1271, 1]  # Default values
+
+for i, (label_text, default_value) in enumerate(zip(labels, default_values)):
+    # Create label
+    label = Label(frame, text=label_text + ":")
+    label.grid(row=i, column=0, sticky=W, padx=5, pady=5)
+
+    # Create entry field
+    entry = Entry(frame, width=10)
+    entry.insert(END, default_value)  # Set default value
+    entry.grid(row=i, column=1, padx=5, pady=5, sticky=E)
+    entries.append(entry)
+
+# Create a smaller frame for Close button and Save to File button
+button_frame = Frame(frame13)
+button_frame.grid(row=3, column=0, padx=10, pady=10)
+
+# Create Save to File button
+save_button = Button(button_frame, text="Save to File", command=save_button_click,bg='gold')
+save_button.grid(row=0, column=0, padx=5)
+# Create Close button
+close_button = Button(button_frame, text="Close", command=root.destroy)
+close_button.grid(row=0, column=1, padx=5)
+
+
 
 root.mainloop()
