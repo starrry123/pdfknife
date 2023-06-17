@@ -3,7 +3,7 @@
 #USE ANY YOUR OWN RISK, NO LIABILITY FOR DAMAGES RESULTING FROM USING
 #YOU MUST SET THE VIEW TO PAGE BY PAGE
 import pyautogui
-import time, io, os
+import time, io, os, ast
 from PIL import Image, ImageDraw
 from reportlab.pdfgen import canvas
 import tkinter as tk
@@ -47,25 +47,20 @@ def page_screenshot(total_pages=1, bbox=(2204, 103, 895, 1271)):
 def save_button_click():
     #Define output PDF filename
     filename= filedialog.asksaveasfilename(title='Choose a file')
-    total_pages = int(entries[4].get())
+    total_pages = int(pageno_entry.get())
     # Specify the bounding box to capture
-    top_left_x = int(entries[0].get())  # Assuming "TopLeft-X" entry is at index 0 in the 'entries' list
-    top_left_y = int(entries[1].get())  # Assuming "TopLeft-Y" entry is at index 1 in the 'entries' list
-    width = int(entries[2].get())  # Assuming "Width" entry is at index 2 in the 'entries' list
-    height = int(entries[3].get())  # Assuming "Height" entry is at index 3 in the 'entries' list
-    screen_region = (top_left_x, top_left_y, width, height)
+    screen_region = ast.literal_eval(screen_entry.get())#(top_left_x, top_left_y, width, height)
     print(screen_region)
     #screen_region = (2204, 103, 895, 1271)  # (left, top, width, height) #FOR PDF-XChange Editor
     #screen_region = (2062, 44, 985, 1388) #FOR www.saiglobal.com online view
     #snip a region of screen and save as image, then use pyautogui.locateOnScreen()to get bbox reading
     #location = pyautogui.locateOnScreen('image.png')
-
-    if filename != '':
+    if filename:
         time.sleep(5)
         img_list=page_screenshot(total_pages,screen_region)
         save_img2pdf(img_list,filename)
         print('PDF successfully generate!')
-        os.startfile(filename)        
+        os.startfile(os.path.realpath(filename))
 
 # Function to update the count label
 def update_count(count):
@@ -97,16 +92,16 @@ entries = []
 
 default_values = [2204, 103, 895, 1271, 1]  # Default values
 
-for i, (label_text, default_value) in enumerate(zip(labels, default_values)):
-    # Create label
-    label = tk.Label(frame, text=label_text + ":")
-    label.grid(row=i, column=0, sticky=tk.W, padx=5, pady=5)
-
-    # Create entry field
-    entry = tk.Entry(frame, width=10)
-    entry.insert(tk.END, default_value)  # Set default value
-    entry.grid(row=i, column=1, padx=5, pady=5, sticky=tk.E)
-    entries.append(entry)
+screen_label = tk.Label(frame, text='topleft-X, topleft-Y, width, height:')
+screen_label.grid(row=1, column=0)
+screen_entry=tk.Entry(frame,width=25)
+screen_entry.insert(tk.END, '(2204, 103, 895, 1271)')
+screen_entry.grid(row=1, column=1)
+pageno_label=tk.Label(frame,text='Total Page:')
+pageno_label.grid(row=2,column=0)
+pageno_entry=tk.Entry(frame,width=25)
+pageno_entry.insert(tk.END,1)
+pageno_entry.grid(row=2, column=1)
 
 # Create a smaller frame for Close button and Save to File button
 button_frame = tk.Frame(pdf_frame)
