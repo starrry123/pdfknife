@@ -10,7 +10,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4,A3, landscape
 from reportlab.lib.colors import black, blue, red,white,green
 from PIL import Image, ImageDraw
-import io, time, pyautogui
+import io, time, pyautogui, ast
 
 def rotate_page(FileName):
     pdf_writer = PdfFileWriter()
@@ -249,9 +249,8 @@ def save_img2pdf(img_list,filename):
         can.showPage()
     can.save()
     packet.seek(0)
-    outputStream = open(filename, "wb")
-    outputStream.write(packet.getvalue())
-    outputStream.close()
+    with open(filename, "wb") as file:
+        file.write(packet.getvalue())
 
 def add_pdf_fmg():
     filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
@@ -300,6 +299,7 @@ def pdf_fmg_rename():
             os.rename(filename, newfile_path)
             #if os.path.getsize(newfile_path) > 2 * 1024 * 1024:  # 2MB
             #    pdf_compress(newfile_path)
+
 def save_img2pdf(img_list,save_pdf):
     packet = io.BytesIO()
     can = canvas.Canvas(packet)    
@@ -309,22 +309,23 @@ def save_img2pdf(img_list,save_pdf):
         can.showPage()
     can.save()
     packet.seek(0)
-    outputStream = open(save_pdf, "wb")
-    outputStream.write(packet.getvalue())
-    outputStream.close()
+    with open(save_pdf, "wb") as file:
+        file.write(packet.getvalue())
 
 def page_screenshot(total_pages=1, bbox=(2204, 103, 895, 1271)):
     pyautogui.FAILSAFE = False # set pyautogui.FAILSAFE to False. DISABLING FAIL-SAFE IS NOT RECOMMENDED.
     # Delay between capturing screenshots and pressing Page Down
     delay = 0.1  # Adjust the delay as needed
-    #print('starting in 5 seconds...')
+    print('starting in 5 seconds...')
     #time.sleep(5)
     img_list=[]
     # Loop through the pages
     for page in range(total_pages):
         # Capture the screenshot within the bounding box
         screenshot = pyautogui.screenshot(region=bbox)
-        mask_regions=[(0, 0, 50, bbox[3]),(0,0,bbox[2],5), (bbox[2],bbox[3],-5, bbox[3]), (bbox[2],bbox[3],bbox[2], bbox[3]-3)]
+        padding=(50, 5,5,5)#Define Mask Padding (Left, Top, Right, Bottom)
+        mask_regions=[(0, 0, padding[0], bbox[3]),(0,0,bbox[2],padding[1]), 
+                    (bbox[2],bbox[3],-padding[2], bbox[3]), (bbox[2],bbox[3],bbox[2], bbox[3]-padding[3])]
         draw=ImageDraw.Draw(screenshot)
         for region in mask_regions:
             draw.rectangle(region,fill=(255,255,255))
@@ -333,39 +334,24 @@ def page_screenshot(total_pages=1, bbox=(2204, 103, 895, 1271)):
         time.sleep(delay)
     return img_list
 
-def pdf_screenshot():
-    save_path=filedialog.asksaveasfilename(parent=root, initialdir=os.path.dirname(os.path.abspath(listbox3.get(0))),title='Save New PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')
-    img_list=page_screenshot()
-    save_img2pdf(img_list,save_path)
-
 # Function to handle Save button click
 def save_button_click():
     #Define output PDF filename
     filename= filedialog.asksaveasfilename(title='Choose a file')
-    #Number of pages to capture
-    #total_pages = get_page_number()
-    total_pages = int(entries[4].get())
+    total_pages = int(pageno_entry.get())
     # Specify the bounding box to capture
-    top_left_x = int(entries[0].get())  # Assuming "TopLeft-X" entry is at index 0 in the 'entries' list
-    top_left_y = int(entries[1].get())  # Assuming "TopLeft-Y" entry is at index 1 in the 'entries' list
-    width = int(entries[2].get())  # Assuming "Width" entry is at index 2 in the 'entries' list
-    height = int(entries[3].get())  # Assuming "Height" entry is at index 3 in the 'entries' list
-    screen_region = (top_left_x, top_left_y, width, height)
-    #screen_region = (2204, 103, 895, 1271)  # (left, top, width, height) #THIS IS FOR PDF-XChange Editor
-    #screen_region = (2062, 44, 985, 1388) #THIS IS FOR www.saiglobal.com online view
+    screen_region = ast.literal_eval(screen_entry.get())#(top_left_x, top_left_y, width, height)
+    #screen_region = (2204, 103, 895, 1271)  # (left, top, width, height) #FOR PDF-XChange Editor
+    #screen_region = (2062, 44, 985, 1388) #FOR www.saiglobal.com online view
     #snip a region of screen and save as image, then use pyautogui.locateOnScreen()to get bbox reading
-    #import pyautogui
     #location = pyautogui.locateOnScreen('image.png')
-    if filename != '':
+    if filename:
         time.sleep(5)
         img_list=page_screenshot(total_pages,screen_region)
         save_img2pdf(img_list,filename)
         print('PDF successfully generate!')
-        os.startfile(filename)        
+        os.startfile(os.path.realpath(filename))
 
-img_list=page_screenshot()
-save_img2pdf(img_list,'TEST.pdf')
-        
 root = TkinterDnD.Tk()
 root.title("PDF Knife -- A collection of PDF toolkits")
 tab=ttk.Notebook(root)
@@ -594,22 +580,16 @@ countdown_label.grid(row=1, column=0, padx=10, pady=10)
 frame = LabelFrame(frame13, text="Screenshot Region")
 frame.grid(row=2, column=0, padx=10, pady=10)
 
-# Create labels and entry fields for TopLeft-X, TopLeft-Y, Width, Height, and Total Page
-labels = ["TopLeft-X", "TopLeft-Y", "Width", "Height", "Total Page"]
-entries = []
-
-default_values = [2204, 103, 895, 1271, 1]  # Default values
-
-for i, (label_text, default_value) in enumerate(zip(labels, default_values)):
-    # Create label
-    label = Label(frame, text=label_text + ":")
-    label.grid(row=i, column=0, sticky=W, padx=5, pady=5)
-
-    # Create entry field
-    entry = Entry(frame, width=10)
-    entry.insert(END, default_value)  # Set default value
-    entry.grid(row=i, column=1, padx=5, pady=5, sticky=E)
-    entries.append(entry)
+screen_label = Label(frame, text='topleft-X, topleft-Y, width, height:')
+screen_label.grid(row=1, column=0)
+screen_entry= Entry(frame,width=25)
+screen_entry.insert(END, '(2204, 103, 895, 1271)')
+screen_entry.grid(row=1, column=1)
+pageno_label=Label(frame,text='Total Page:')
+pageno_label.grid(row=2,column=0)
+pageno_entry=Entry(frame,width=25)
+pageno_entry.insert(END,1)
+pageno_entry.grid(row=2, column=1)
 
 # Create a smaller frame for Close button and Save to File button
 button_frame = Frame(frame13)
@@ -621,7 +601,6 @@ save_button.grid(row=0, column=0, padx=5)
 # Create Close button
 close_button = Button(button_frame, text="Close", command=root.destroy)
 close_button.grid(row=0, column=1, padx=5)
-
 
 
 root.mainloop()
