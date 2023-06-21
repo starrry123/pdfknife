@@ -2,7 +2,8 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox #for messagebox.
 from tkinter import filedialog
-from tkinterdnd2 import DND_FILES, TkinterDnD
+from TkinterDnD2 import *
+#from tkinterdnd2 import DND_FILES, TkinterDnD
 import pdf2image as ph
 import os,io,datetime, tabula,copy, re
 from PyPDF2 import PdfFileWriter, PdfFileReader
@@ -352,6 +353,31 @@ def save_button_click():
         print('PDF successfully generate!')
         os.startfile(os.path.realpath(filename))
 
+def toggle_tracking():
+    global is_tracking
+    if is_tracking:
+        stop_tracking()
+    else:
+        start_tracking()
+
+def start_tracking():
+    global is_tracking
+    is_tracking = True
+    toggle_button.config(text="Stop Tracking")
+    get_cursor_position()
+
+def stop_tracking():
+    global is_tracking
+    is_tracking = False
+    toggle_button.config(text="Start Tracking")
+    countdown_label.config(text="Switch App focus before 5s countdown")
+
+def get_cursor_position():
+    if is_tracking:
+        position = pyautogui.position()
+        countdown_label.config(text=f"Cursor position: {position.x}, {position.y}")
+        root.after(100, get_cursor_position)
+
 root = TkinterDnD.Tk()
 root.title("PDF Knife -- A collection of PDF toolkits")
 tab=ttk.Notebook(root)
@@ -595,12 +621,16 @@ pageno_entry.grid(row=2, column=1)
 button_frame = Frame(frame13)
 button_frame.grid(row=3, column=0, padx=10, pady=10)
 
+#position toggle button
+is_tracking = False
+toggle_button = Button(button_frame, text="Start Tracking", command=toggle_tracking, bg='skyblue')
+toggle_button.grid(row=0, column=0, padx=5)
 # Create Save to File button
 save_button = Button(button_frame, text="Save to File", command=save_button_click,bg='gold')
-save_button.grid(row=0, column=0, padx=5)
+save_button.grid(row=0, column=1, padx=5)
 # Create Close button
 close_button = Button(button_frame, text="Close", command=root.destroy)
-close_button.grid(row=0, column=1, padx=5)
+close_button.grid(row=0, column=2, padx=5)
 
 
 root.mainloop()
