@@ -10,8 +10,8 @@ from PyPDF2 import PdfFileWriter, PdfFileReader
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4,A3, landscape
 from reportlab.lib.colors import black, blue, red,white,green
-from PIL import Image, ImageDraw
-import io, time, pyautogui, ast
+from PIL import Image, ImageDraw, ImageTk
+import io, time, pyautogui, ast, fitz
 
 def rotate_page(FileName):
     pdf_writer = PdfFileWriter()
@@ -378,6 +378,79 @@ def get_cursor_position():
         countdown_label.config(text=f"Cursor position: {position.x}, {position.y}")
         root.after(100, get_cursor_position)
 
+
+class PDFViewer:
+    def __init__(self):
+        self.root = Tk()
+        self.root.title("PDF Viewer")
+        self.root.geometry("1024x768")
+        self.root.bind('<Motion>', self.update_cursor_position)
+
+        self.canvas = Canvas(self.root)
+        self.canvas.pack(fill=BOTH, expand=True)
+
+        self.position_button = Button(self.root, text="Position", command=self.position_button_clicked)
+        self.position_button.pack()
+
+        self.pdf_document = None
+        self.pdf_page = None
+        self.pdf_image = None
+        self.horizontal_line = None
+        self.vertical_line = None
+
+    def open_pdf(self):
+        file_path = filedialog.askopenfilename(filetypes=[("PDF Files", "*.pdf")])
+        if file_path:
+            self.pdf_document = fitz.open(file_path)
+            self.pdf_page = self.pdf_document.load_page(0)
+            self.display_pdf_page()
+
+    def display_pdf_page(self):
+        if self.pdf_page:
+            pix = self.pdf_page.get_pixmap()
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            self.pdf_image = ImageTk.PhotoImage(img,master=self.canvas)
+            self.canvas.config(width=pix.width, height=pix.height)
+            self.canvas.create_image(0, 0, anchor=NW, image=self.pdf_image)
+
+    def position_button_clicked(self):
+        self.canvas.config(cursor="crosshair")
+        self.canvas.bind("<Button-1>", self.canvas_mouse_press_event)
+
+    def canvas_mouse_press_event(self, event):
+        page_coords = self.get_page_coordinates(event.x, event.y)
+        print("Cursor position (x, y):", page_coords.x, page_coords.y)
+
+    def get_page_coordinates(self, x, y):
+        scale_x = self.canvas.winfo_width() / self.pdf_page.rect.width
+        scale_y = self.canvas.winfo_height() / self.pdf_page.rect.height
+        page_x = int(x / scale_x)
+        page_y = int(y / scale_y)
+        return fitz.Point(page_x, page_y)
+
+    def update_cursor_position(self, event):
+        page_coords = self.get_page_coordinates(event.x, event.y)
+        self.root.title(f"PDF Viewer - Cursor Position: {page_coords.x}, {page_coords.y}")
+
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+
+        if self.horizontal_line:
+            self.canvas.delete(self.horizontal_line)
+        if self.vertical_line:
+            self.canvas.delete(self.vertical_line)
+
+        self.horizontal_line = self.canvas.create_line(0, event.y, canvas_width, event.y, fill="blue")
+        self.vertical_line = self.canvas.create_line(event.x, 0, event.x, canvas_height, fill="blue")
+
+    def run(self):
+        self.root.mainloop()
+
+def pdf_viewer():
+    viewer = PDFViewer()
+    viewer.open_pdf()
+    viewer.run()
+
 root = TkinterDnD.Tk()
 root.title("PDF Knife -- A collection of PDF toolkits")
 tab=ttk.Notebook(root)
@@ -495,11 +568,13 @@ deg_spin.grid(row=3,column=1,sticky=N+S+W)
 lab_deg2=Label(frame3,text='°')
 lab_deg2.grid(row=3,column=2,sticky=N+S+W)
 
+button_pos = Button(frame3, text='Show Coordinates', bg='skyblue', command=pdf_viewer)
+button_pos.grid(row=4,column=0,sticky=N+S+E+W)
 button_clearfile2 = Button(frame3, text='➖ Clear List')
-button_clearfile2.grid(row=4,column=0,sticky=N+S+E+W)
+button_clearfile2.grid(row=4,column=1,sticky=N+S+E+W)
 button_clearfile2.bind("<Button-1>", lambda e: listbox2.delete(0,END))
 button_grid = Button(frame3,command=pdf_grid, text="Create PDF grid",bg='gold')
-button_grid.grid(row=4,column=1,sticky=N+S+W)
+button_grid.grid(row=4,column=2,sticky=N+S+W)
 
 ##################PDF Merge GUI#################
 listbox3 = Listbox(frame5, width=60)
