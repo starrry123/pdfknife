@@ -684,7 +684,7 @@ button_addfile_js.grid(row=1,column=0,sticky=N+S+E+W)
 button_clearfile_js = Button(frame15, text='➖ Clear List')
 button_clearfile_js.grid(row=1,column=1,sticky=N+S+E+W)
 button_clearfile_js.bind("<Button-1>", lambda e: listbox7.delete(0,END))
-button_ok_js = Button(frame15,command=remove_javascript, text="Rotate PDF",bg='gold')
+button_ok_js = Button(frame15,command=remove_javascript, text="Remove PDF JavaScript",bg='gold')
 button_ok_js.grid(row=1,column=2,sticky=N+E+S+W)
 
 root.mainloop()
