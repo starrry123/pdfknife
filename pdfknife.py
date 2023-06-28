@@ -2,8 +2,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox #for messagebox.
 from tkinter import filedialog
-from TkinterDnD2 import *
-#from tkinterdnd2 import DND_FILES, TkinterDnD
+from tkinterdnd2 import *
 import pdf2image as ph
 import os,io,datetime, tabula,copy, re
 from PyPDF2 import PdfFileWriter, PdfFileReader
@@ -97,35 +96,20 @@ def pdf_grid ():
 
 def convert_image():
     folder_selected = filedialog.askdirectory()
-
-    for PDF in listbox.get(0,END):
-        listbox.delete(0)
+    for PDF in listbox1.get(0,END):
+        listbox1.delete(0)
         images = ph.convert_from_path(PDF)
         for i,img in enumerate(images):
             img.save(os.path.join(folder_selected, os.path.splitext(os.path.basename(PDF))[0]+'_'+str(i)+'.jpg'))
 
-def drop(event):
+def drop(event, listbox):
+    listbox.drop_target_register(DND_FILES)
+
     for item in listbox.tk.splitlist(event.data):
-        listbox.insert(END,item)
+        listbox.insert(END, item)
 
-def drop2(event):
-    for item in listbox2.tk.splitlist(event.data):
-        listbox2.insert(END,item)
-
-def drop3(event):
-    for item in listbox3.tk.splitlist(event.data):
-        listbox3.insert(END,item)
-
-def drop4(event):
-    for item in listbox4.tk.splitlist(event.data):
-        listbox4.insert(END,item)
-
-def drop7(event):
-    for item in listbox7.tk.splitlist(event.data):
-        listbox7.insert(END,item)
-
-def add_files_listbox():
-    filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
+def add_files(listbox):
+    filez = filedialog.askopenfilenames(parent=root, title='Choose a file')
     for item in root.tk.splitlist(filez):
         listbox.insert(END, item)
 
@@ -153,10 +137,6 @@ def move_down3():
         listbox3.insert(pos+1,text)
         listbox3.selection_set(pos+1)
 
-def add_files_listbox3():
-    filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
-    for item in root.tk.splitlist(filez):
-        listbox3.insert(END, item)
 
 def pdf_merge_save():
     out_pdf = PdfFileWriter()
@@ -170,10 +150,6 @@ def pdf_merge_save():
         out_pdf.write(save_path_stream)
     listbox3.delete(0,END) 
 
-def add_files_listbox_r():
-    filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
-    for item in root.tk.splitlist(filez):
-        listbox4.insert(END, item)
 
 def save_as_rot():
     save_path=filedialog.asksaveasfilename(parent=root, initialdir=os.path.dirname(os.path.abspath(listbox4.get(0))),title='Save New PDF to …', filetypes=[('PDF files','*.pdf')],defaultextension='.pdf')
@@ -203,19 +179,6 @@ def save_as_rot():
             with open(save_path, 'wb') as pdf_outstream:
                 pdf_out.write(pdf_outstream)
         listbox4.delete(0,END)
-
-def add_files_listbox_pdf_excel():
-    filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
-    for item in root.tk.splitlist(filez):
-        listbox5.insert(END, item)
-
-def drop5(event):
-    for item in listbox5.tk.splitlist(event.data):
-        listbox5.insert(END,item)
-
-def drop6(event):
-    for item in listbox6.tk.splitlist(event.data):
-        listbox6.insert(END,item)
         
 def save_as_pdf_excel():
     import csv,openpyxl
@@ -234,12 +197,6 @@ def save_as_pdf_excel():
                 ws.append(row)
         wb.save(output_xls)
         #tabula.convert_into(item,output,pages = "all", all=True)
-
-def add_files_listbox_img2pdf():
-    filez = filedialog.askopenfilenames(parent=root,title='Choose a file')
-    for item in root.tk.splitlist(filez):
-        listbox6.insert(END, item)
-
 
 def save_img2pdf(img_list,filename):
     packet = io.BytesIO()
@@ -378,7 +335,6 @@ def get_cursor_position():
         countdown_label.config(text=f"Cursor position: {position.x}, {position.y}")
         root.after(100, get_cursor_position)
 
-
 class PDFViewer:
     def __init__(self):
         self.root = Tk()
@@ -451,6 +407,23 @@ def pdf_viewer():
     viewer.open_pdf()
     viewer.run()
 
+def remove_javascript():
+    for item in listbox7.get(0,END):
+        if item.upper().endswith('PDF'):
+            pdf = fitz.open(item)
+            pdf.scrub(javascript=True)  # Remove JavaScript sources
+            # # Save the modified PDF to the output file
+            directory = os.path.dirname(item)
+            filename = os.path.basename(item)
+            new_filename = '_'+os.path.splitext(filename)[0] + ".pdf"
+            output_file = os.path.join(directory, new_filename)
+
+            pdf.save(output_file,garbage=3, deflate=True)
+            pdf.close()
+            listbox7.delete(0)
+
+
+
 root = TkinterDnD.Tk()
 root.title("PDF Knife -- A collection of PDF toolkits")
 tab=ttk.Notebook(root)
@@ -473,6 +446,9 @@ tab.add(tab6,text='Image2PDF')
 tab.pack(expand=1,fill='both')
 tab7=ttk.Frame(tab)
 tab.add(tab7,text='PDF Screenshot')
+tab.pack(expand=1,fill='both')
+tab8=ttk.Frame(tab)
+tab.add(tab8,text='Remove JavaScript')
 tab.pack(expand=1,fill='both')
 
 frame1=LabelFrame(tab1,text="Drop PDF files here")
@@ -505,26 +481,32 @@ frame12.grid(row=1,column=0,padx=5, pady=5,sticky=N+E+S+W)
 frame13=LabelFrame(tab7,text="PDF Screenshot")
 frame13.grid(row=0,column=0,padx=5, pady=5,sticky=N+E+S+W)
 
+frame14=LabelFrame(tab8,text="Remove JavaScript")
+frame14.grid(row=0,column=0,padx=5, pady=5,sticky=N+E+S+W)
+frame15=LabelFrame(tab8,text="List Operation")
+frame15.grid(row=1,column=0,padx=5, pady=5,sticky=N+E+S+W)
+
+
 ###############PDF to Photo GUI#########################
-listbox = Listbox(frame1, width=60)
-listbox.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
+listbox1 = Listbox(frame1, width=60)
+listbox1.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 #for item in sys.argv[1:]:
 #    listbox.insert(END, item)
 xscrollbar2 = Scrollbar(frame1,orient=HORIZONTAL)
 xscrollbar2.grid(row=1, column=0,sticky=E+W)
-listbox.config(xscrollcommand=xscrollbar2.set)
-xscrollbar2.config(command=listbox.xview)
+listbox1.config(xscrollcommand=xscrollbar2.set)
+xscrollbar2.config(command=listbox1.xview)
 yscrollbar2 = Scrollbar(frame1,orient=VERTICAL )
 yscrollbar2.grid(row=0, column=1,sticky=N+S+W)
-listbox.config(yscrollcommand=yscrollbar2.set)
-yscrollbar2.config(command=listbox.yview)
-listbox.drop_target_register(DND_FILES)
-listbox.dnd_bind('<<Drop>>', drop)
-button_addfile = Button(frame2, command=add_files_listbox,text='➕ Add Files ')
-button_addfile.grid(row=0,column=0,sticky=N+S+E+W)
+listbox1.config(yscrollcommand=yscrollbar2.set)
+yscrollbar2.config(command=listbox1.yview)
+listbox1.drop_target_register(DND_FILES)
+listbox1.dnd_bind('<<Drop>>', lambda event: drop(event, listbox1))
+button_addfile1 = Button(frame2, command=lambda: add_files(listbox1), text='➕ Add Files')
+button_addfile1.grid(row=0,column=0,sticky=N+S+E+W)
 button_clearfile = Button(frame2, text='➖ Clear List')
 button_clearfile.grid(row=0,column=1,sticky=N+S+E+W)
-button_clearfile.bind("<Button-1>", lambda e: listbox.delete(0,END))
+button_clearfile.bind("<Button-1>", lambda e: listbox1.delete(0,END))
 button_ok = Button(frame2,command=convert_image, text="[Convert]",bg='gold')
 button_ok.grid(row=0,column=2,sticky=E)
 
@@ -534,8 +516,7 @@ listbox2.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 #for item in sys.argv[1:]:
 #    listbox2.insert(END, item)
 listbox2.drop_target_register(DND_FILES)
-listbox2.dnd_bind('<<Drop>>', drop2)
-
+listbox2.dnd_bind('<<Drop>>', lambda event: drop(event, listbox2))
 CheckV1 = BooleanVar()
 CheckV1.set(True)
 #CheckV2 = BooleanVar()
@@ -590,14 +571,14 @@ yscrollbar2.grid(row=0, column=1,sticky=N+S+W)
 listbox3.config(yscrollcommand=yscrollbar2.set)
 yscrollbar2.config(command=listbox3.yview)
 listbox3.drop_target_register(DND_FILES)
-listbox3.dnd_bind('<<Drop>>', drop3)
+listbox3.dnd_bind('<<Drop>>', lambda event: drop(event, listbox3))
 button_moveup = Button(frame6, command=move_up3,text='↑ Move Up ')
 button_moveup.grid(row=0,column=0,sticky=N+S+E+W)
 button_movedown = Button(frame6, command=move_down3,text='↓ Move Down ')
 button_movedown.grid(row=0,column=1,sticky=N+S+E+W)
 
-button_addfile = Button(frame6, command=add_files_listbox3,text='➕ Add Files ')
-button_addfile.grid(row=0,column=2,sticky=N+S+E+W)
+button_addfile3 = Button(frame6, command=lambda: add_files(listbox3), text='➕ Add Files')
+button_addfile3.grid(row=0,column=2,sticky=N+S+E+W)
 button_clearfile3 = Button(frame6, text='➖ Clear List')
 button_clearfile3.grid(row=0,column=3,sticky=N+S+E+W)
 button_clearfile3.bind("<Button-1>", lambda e: listbox3.delete(0,END))
@@ -609,7 +590,7 @@ button_ok.grid(row=0,column=4,sticky=N+E+S+W)
 listbox4 = Listbox(frame7, width=60)
 listbox4.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 listbox4.drop_target_register(DND_FILES)
-listbox4.dnd_bind('<<Drop>>', drop4)
+listbox4.dnd_bind('<<Drop>>', lambda event: drop(event, listbox4))
 
 lab_r=Label(frame8, text='Pages to be rotated:')
 lab_r.grid(row=0,column=0)
@@ -621,7 +602,7 @@ degs=StringVar()
 degs.set('90°')
 deg_menu=OptionMenu(frame8, degs,*deg_list)
 deg_menu.grid(row=0,column=2,sticky=N+E+S+W)
-button_addfile_r = Button(frame8, command=add_files_listbox_r,text='➕ Add Files ')
+button_addfile_r = Button(frame8, command=lambda: add_files(listbox4), text='➕ Add Files')
 button_addfile_r.grid(row=1,column=0,sticky=N+S+E+W)
 button_clearfile_r = Button(frame8, text='➖ Clear List')
 button_clearfile_r.grid(row=1,column=1,sticky=N+S+E+W)
@@ -633,9 +614,8 @@ button_ok_r.grid(row=1,column=2,sticky=N+E+S+W)
 listbox5 = Listbox(frame9, width=60)
 listbox5.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 listbox5.drop_target_register(DND_FILES)
-listbox5.dnd_bind('<<Drop>>', drop5)
-
-button_addfile_pdf_excel = Button(frame10, command=add_files_listbox_pdf_excel,text='➕ Add Files ')
+listbox5.dnd_bind('<<Drop>>', lambda event: drop(event, listbox6))
+button_addfile_pdf_excel = Button(frame10, command=lambda: add_files(listbox5), text='➕ Add Files')
 button_addfile_pdf_excel.grid(row=1,column=0,sticky=N+S+E+W)
 button_clearfile_pdf_excel = Button(frame10, text='➖ Clear List')
 button_clearfile_pdf_excel.grid(row=1,column=1,sticky=N+S+E+W)
@@ -647,9 +627,9 @@ button_ok_pdf_excel.grid(row=1,column=2,sticky=N+E+S+W)
 listbox6 = Listbox(frame11, width=60)
 listbox6.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 listbox6.drop_target_register(DND_FILES)
-listbox6.dnd_bind('<<Drop>>', drop6)
+listbox6.dnd_bind('<<Drop>>', lambda event: drop(event, listbox6))
 
-button_addfile_img2pdf = Button(frame12, command=add_files_listbox_img2pdf,text='➕ Add Files ')
+button_addfile_img2pdf = Button(frame12, command=lambda: add_files(listbox6), text='➕ Add Files')
 button_addfile_img2pdf.grid(row=1,column=0,sticky=N+S+E+W)
 button_clearfile_img2pdf = Button(frame12, text='➖ Clear List')
 button_clearfile_img2pdf.grid(row=1,column=1,sticky=N+S+E+W)
@@ -657,21 +637,7 @@ button_clearfile_img2pdf.bind("<Button-1>", lambda e: listbox6.delete(0,END))
 button_ok_img2pdf = Button(frame12,command=save_img2pdf, text="Save PDF",bg='gold')
 button_ok_img2pdf.grid(row=1,column=2,sticky=N+E+S+W)
 
-##################CHANGE PDF NAME#################
-# listbox7 = Listbox(frame13, width=60)
-# listbox7.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
-# listbox7.drop_target_register(DND_FILES)
-# listbox7.dnd_bind('<<Drop>>', drop7)
-
-# button_addfile_fmg2pdf = Button(frame14, command=add_pdf_fmg,text='➕ Add Files ')
-# button_addfile_fmg2pdf.grid(row=1,column=0,sticky=N+S+E+W)
-# button_clearfile_fmg2pdf = Button(frame14, text='➖ Clear List')
-# button_clearfile_fmg2pdf.grid(row=1,column=1,sticky=N+S+E+W)
-# button_clearfile_fmg2pdf.bind("<Button-1>", lambda e: listbox7.delete(0,END))
-# button_ok_fmg2pdf = Button(frame14,command=pdf_fmg_rename, text="Save PDF",bg='gold')
-# button_ok_fmg2pdf.grid(row=1,column=2,sticky=N+E+S+W)
-
-
+ 
 ################PDF SCREENSHOT GUI##########################
 # Create the label for the countdown text
 countdown_label = Label(frame13, text="Switch App focus before 5s countdown")
@@ -707,5 +673,18 @@ save_button.grid(row=0, column=1, padx=5)
 close_button = Button(button_frame, text="Close", command=root.destroy)
 close_button.grid(row=0, column=2, padx=5)
 
+##################PDF REMOVE JAVASCRIPT GUI#################
+listbox7 = Listbox(frame14, width=60)
+listbox7.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
+listbox7.drop_target_register(DND_FILES)
+listbox7.dnd_bind('<<Drop>>', lambda event: drop(event, listbox7))
+
+button_addfile_js = Button(frame15, command=lambda: add_files(listbox7), text='➕ Add Files')
+button_addfile_js.grid(row=1,column=0,sticky=N+S+E+W)
+button_clearfile_js = Button(frame15, text='➖ Clear List')
+button_clearfile_js.grid(row=1,column=1,sticky=N+S+E+W)
+button_clearfile_js.bind("<Button-1>", lambda e: listbox7.delete(0,END))
+button_ok_js = Button(frame15,command=remove_javascript, text="Rotate PDF",bg='gold')
+button_ok_js.grid(row=1,column=2,sticky=N+E+S+W)
 
 root.mainloop()
