@@ -2,12 +2,13 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox #for messagebox.
 from tkinter import filedialog
-from tkinterdnd2 import *
+#from tkinterdnd2 import *
+from tkinterdnd2 import DND_FILES, TkinterDnD
 import pdf2image as ph
 import os,io,datetime, tabula,copy, re
 from PyPDF2 import PdfFileWriter, PdfFileReader
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4,A3, landscape
+from reportlab.lib.pagesizes import A4,A3, landscape, portrait
 from reportlab.lib.colors import black, blue, red,white,green
 from PIL import Image, ImageDraw, ImageTk
 import io, time, pyautogui, ast, fitz
@@ -258,36 +259,45 @@ def pdf_fmg_rename():
             #if os.path.getsize(newfile_path) > 2 * 1024 * 1024:  # 2MB
             #    pdf_compress(newfile_path)
 
-def save_img2pdf(img_list,save_pdf):
-    packet = io.BytesIO()
-    can = canvas.Canvas(packet)    
-    for img in img_list:
-        can.setPageSize(img.size)
-        can.drawInlineImage(img, 0, 0, preserveAspectRatio=True)
-        can.showPage()
-    can.save()
-    packet.seek(0)
-    with open(save_pdf, "wb") as file:
-        file.write(packet.getvalue())
+# def save_img2pdf(img_list,save_pdf):
+#     packet = io.BytesIO()
+#     can = canvas.Canvas(packet)    
+#     for img in img_list:
+#         can.setPageSize(img.size)
+#         can.drawInlineImage(img, 0, 0, preserveAspectRatio=True)
+#         can.showPage()
+#     can.save()
+#     packet.seek(0)
+#     with open(save_pdf, "wb") as file:
+#         file.write(packet.getvalue())
 
-def page_screenshot(total_pages=1, bbox=(2204, 103, 895, 1271)):
+def page_screenshot(total_pages, bbox):
     pyautogui.FAILSAFE = False # set pyautogui.FAILSAFE to False. DISABLING FAIL-SAFE IS NOT RECOMMENDED.
     # Delay between capturing screenshots and pressing Page Down
     delay = 0.1  # Adjust the delay as needed
     print('starting in 5 seconds...')
+    pos1,pos2=bbox
     #time.sleep(5)
     img_list=[]
+    # Define the margins to crop
+    top_margin = 5
+    left_margin = 50
+    right_margin = 5
+    bottom_margin = 5
+    if screenshot_orit.get()=='Landscape': 
+        top_margin = 60
+        left_margin = 5
+    # Calculate the new coordinates for cropping
+    x0 = pos1[0]+left_margin
+    y0 = pos1[1]+top_margin
+    x1 = pos2[0]-right_margin
+    y1 = pos2[1]- bottom_margin
     # Loop through the pages
     for page in range(total_pages):
         # Capture the screenshot within the bounding box
-        screenshot = pyautogui.screenshot(region=bbox)
-        padding=(50, 5,5,5)#Define Mask Padding (Left, Top, Right, Bottom)
-        mask_regions=[(0, 0, padding[0], bbox[3]),(0,0,bbox[2],padding[1]), 
-                    (bbox[2],bbox[3],-padding[2], bbox[3]), (bbox[2],bbox[3],bbox[2], bbox[3]-padding[3])]
-        draw=ImageDraw.Draw(screenshot)
-        for region in mask_regions:
-            draw.rectangle(region,fill=(255,255,255))
-        img_list.append(screenshot)
+        screenshot = pyautogui.screenshot()#(region=bbox)
+        cropped_image = screenshot.crop((x0,y0,x1,y1))
+        img_list.append(cropped_image)
         pyautogui.press('pagedown')
         time.sleep(delay)
     return img_list
@@ -298,11 +308,10 @@ def save_button_click():
     filename= filedialog.asksaveasfilename(title='Choose a file')
     total_pages = int(pageno_entry.get())
     # Specify the bounding box to capture
-    screen_region = ast.literal_eval(screen_entry.get())#(top_left_x, top_left_y, width, height)
-    #screen_region = (2204, 103, 895, 1271)  # (left, top, width, height) #FOR PDF-XChange Editor
-    #screen_region = (2062, 44, 985, 1388) #FOR www.saiglobal.com online view
-    #snip a region of screen and save as image, then use pyautogui.locateOnScreen()to get bbox reading
-    #location = pyautogui.locateOnScreen('image.png')
+    pos1 = ast.literal_eval(screen_entry1.get())#(topleft-X, topleft-Y, btmright-X, btmright-Y)
+    pos2 = ast.literal_eval(screen_entry2.get())#(topleft-X, topleft-Y, btmright-X, btmright-Y)
+    screen_region = (pos1,pos2)
+
     if filename:
         time.sleep(5)
         img_list=page_screenshot(total_pages,screen_region)
@@ -421,6 +430,10 @@ def remove_javascript():
             pdf.save(output_file,garbage=3, deflate=True)
             pdf.close()
             listbox7.delete(0)
+
+def on_mouse_right_click_event(event):
+    if event == 'right':
+        print("Right-click detected!:"+get_cursor_position())
 
 
 
@@ -614,7 +627,7 @@ button_ok_r.grid(row=1,column=2,sticky=N+E+S+W)
 listbox5 = Listbox(frame9, width=60)
 listbox5.grid(row=0,column=0,padx=5, pady=5, ipadx=5, ipady=5, sticky=N+S+E+W)
 listbox5.drop_target_register(DND_FILES)
-listbox5.dnd_bind('<<Drop>>', lambda event: drop(event, listbox6))
+listbox5.dnd_bind('<<Drop>>', lambda event: drop(event, listbox5))
 button_addfile_pdf_excel = Button(frame10, command=lambda: add_files(listbox5), text='➕ Add Files')
 button_addfile_pdf_excel.grid(row=1,column=0,sticky=N+S+E+W)
 button_clearfile_pdf_excel = Button(frame10, text='➖ Clear List')
@@ -646,17 +659,31 @@ countdown_label.grid(row=1, column=0, padx=10, pady=10)
 # Create a labeled frame for the screenshot region
 frame = LabelFrame(frame13, text="Screenshot Region")
 frame.grid(row=2, column=0, padx=10, pady=10)
+frame.bind("<Button-3>",on_mouse_right_click_event)
+#screen_label = Label(frame, text='topleft-X, topleft-Y, width, height:')
 
-screen_label = Label(frame, text='topleft-X, topleft-Y, width, height:')
-screen_label.grid(row=1, column=0)
-screen_entry= Entry(frame,width=25)
-screen_entry.insert(END, '(2204, 103, 895, 1271)')
-screen_entry.grid(row=1, column=1)
+
+ 
+screen_label1 = Label(frame, text='Top Left Coordinates:')
+screen_label1.grid(row=1, column=0)
+screen_entry1= Entry(frame,width=25)
+screen_entry1.insert(END, '(2113, 103)')
+screen_entry1.grid(row=1, column=1)
+screen_label2 = Label(frame, text='Bottom Right Coordinates:')
+screen_label2.grid(row=2, column=0)
+screen_entry2= Entry(frame,width=25)
+screen_entry2.insert(END, '(3012, 1374)')
+screen_entry2.grid(row=2, column=1)
 pageno_label=Label(frame,text='Total Page:')
-pageno_label.grid(row=2,column=0)
+pageno_label.grid(row=3,column=0)
 pageno_entry=Entry(frame,width=25)
 pageno_entry.insert(END,1)
-pageno_entry.grid(row=2, column=1)
+pageno_entry.grid(row=3, column=1)
+
+screenshot_orit=StringVar()
+screenshot_orit.set('Portrait')
+screenshot_orit_menu=OptionMenu(frame, screenshot_orit,*orits)
+screenshot_orit_menu.grid(row=4,column=1)
 
 # Create a smaller frame for Close button and Save to File button
 button_frame = Frame(frame13)
