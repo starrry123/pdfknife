@@ -1,10 +1,11 @@
 import requests,re,itertools
 from bs4 import BeautifulSoup
+from prettytable import PrettyTable
 import pandas as pd  # Import pandas
 
 url='https://aicip.org.au/inspector-find/'
 
-def get_page_num(url):
+def get_page_num():
     print('processing...', url)
     page = requests.get(url)
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -23,22 +24,26 @@ def scrape_data(url):
         data = {}
         name = div.find('h5').text
         data['Name'] = name
-        for tr in div.findAll('tr'):
-            td = tr.find('td')
-            if td:
-                key, value = map(str.strip, td.text.split(':', 1))
-                data[key] = value
-
+        table = div.find('table', class_='table table-bordered')
+        rows = table.find_all('tr')
+        for row in rows:
+            columns = row.find_all('td')
+            for column in columns:
+                text = column.text.strip()
+                if ':' in text:
+                    key, value = map(str.strip, text.split(':', 1))
+                    data[key] = value
         records.append(data)
 
     return records
+
 
 # Create an empty list to store all the records
 columns = ['Name', 'Registration No', 'Qualification', 'Date Valid to', 'Status', 'State',
            'Modules', 'Email', 'Mobile No', 'Suburb']
 all_records = []
 
-for i in range(1, get_page_num(url)+1):
+for i in range(1, get_page_num()+1):
     if i == 1:
         url = 'https://aicip.org.au/inspector-find/'
     else:
